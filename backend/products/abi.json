@@ -1,0 +1,203 @@
+[
+    {
+        "inputs": [],
+        "name": "InvalidOwnerAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidProductId",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotProductOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ProductAlreadyExists",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ProductNotFound",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "uuid",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "uuid",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "hash",
+                "type": "string"
+            }
+        ],
+        "name": "ProductAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "uuid",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "newHash",
+                "type": "string"
+            }
+        ],
+        "name": "ProductUpdated",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_uuid",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_hash",
+                "type": "string"
+            }
+        ],
+        "name": "addProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_uuid",
+                "type": "string"
+            }
+        ],
+        "name": "getProduct",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_uuid",
+                "type": "string"
+            }
+        ],
+        "name": "productExistsCheck",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_uuid",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "_newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_uuid",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_newHash",
+                "type": "string"
+            }
+        ],
+        "name": "updateProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

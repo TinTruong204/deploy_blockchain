@@ -1,0 +1,5 @@
+djangorestframework
+mysqlclient
+web3
+pillow
+qrcode

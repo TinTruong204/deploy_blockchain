@@ -1,0 +1,11 @@
+# Python cache and virtualenv
+__pycache__/
+*.pyc
+.venv/
+
+# Env files
+.env
+.env.*
+
+# Local media/dev artifacts
+media/

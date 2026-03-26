@@ -3,3 +3,4 @@ mysqlclient
 web3
 pillow
 qrcode
+gunicorn

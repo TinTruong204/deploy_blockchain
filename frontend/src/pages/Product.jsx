@@ -23,8 +23,8 @@ export default function Product() {
 
   const traceUrl = useMemo(() => {
     if (!id) return "";
-    if (typeof window === "undefined") return `/product/${id}`;
-    return `${window.location.origin}/product/${id}`;
+    if (typeof window === "undefined") return `/#/product/${id}`;
+    return `${window.location.origin}/#/product/${id}`;
   }, [id]);
 
   const qrImageUrl = useMemo(() => {

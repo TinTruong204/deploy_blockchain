@@ -1,6 +1,8 @@
 import hashlib
 import uuid
 
+from django.core.paginator import EmptyPage, Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -227,11 +229,38 @@ def get_products_by_wallet(request):
     if not wallet:
         return Response({"detail": "wallet is required"}, status=400)
 
-    products = Product.objects.filter(owner_wallet__iexact=wallet).order_by("-created_at")
+    search = (request.GET.get("search") or "").strip()
+    status_filter = (request.GET.get("status") or "").strip().upper()
+
+    try:
+        page = int(request.GET.get("page") or 1)
+    except ValueError:
+        return Response({"detail": "page must be an integer"}, status=400)
+
+    try:
+        page_size = int(request.GET.get("page_size") or 9)
+    except ValueError:
+        return Response({"detail": "page_size must be an integer"}, status=400)
+
+    if page < 1:
+        return Response({"detail": "page must be >= 1"}, status=400)
+    if page_size < 1 or page_size > 50:
+        return Response({"detail": "page_size must be between 1 and 50"}, status=400)
+
+    products = Product.objects.filter(owner_wallet__iexact=wallet)
+
+    if search:
+        products = products.filter(Q(name__icontains=search) | Q(origin__icontains=search))
+
+    products = products.order_by("-created_at")
 
     data = []
     for product in products:
         latest = ProductVersion.objects.filter(product=product).order_by("-version").first()
+
+        if status_filter and (not latest or (latest.status or "").upper() != status_filter):
+            continue
+
         data.append(
             {
                 "id": str(product.id),
@@ -251,4 +280,31 @@ def get_products_by_wallet(request):
             }
         )
 
-    return Response({"products": data})
+    paginator = Paginator(data, page_size)
+
+    try:
+        page_obj = paginator.page(page)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages) if paginator.num_pages > 0 else []
+
+    items = list(page_obj.object_list) if paginator.count > 0 else []
+    current_page = page_obj.number if paginator.count > 0 else 1
+    total_pages = paginator.num_pages if paginator.count > 0 else 0
+
+    return Response(
+        {
+            "products": items,
+            "pagination": {
+                "page": current_page,
+                "page_size": page_size,
+                "total_items": paginator.count,
+                "total_pages": total_pages,
+                "has_next": page_obj.has_next() if paginator.count > 0 else False,
+                "has_previous": page_obj.has_previous() if paginator.count > 0 else False,
+            },
+            "filters": {
+                "search": search,
+                "status": status_filter,
+            },
+        }
+    )

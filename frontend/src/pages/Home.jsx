@@ -273,11 +273,6 @@ export default function Home() {
                   ))}
                 </select>
               </label>
-
-              <label className="control-field">
-                <span>Số mục/trang</span>
-                <input type="text" value={ITEMS_PER_PAGE} readOnly />
-              </label>
             </div>
           )}
 

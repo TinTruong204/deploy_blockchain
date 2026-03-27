@@ -132,7 +132,6 @@ def create_product(request):
         return Response({"detail": "id must be a valid UUID"}, status=400)
 
     try:
-        harvest_date = parse_optional_date(request.data.get("harvest_date"), "harvest_date")
         quantity_kg = parse_optional_decimal(request.data.get("quantity_kg"), "quantity_kg")
         temperature_c = parse_optional_decimal(request.data.get("temperature_c"), "temperature_c")
         humidity_percent = parse_optional_decimal(request.data.get("humidity_percent"), "humidity_percent")
@@ -160,7 +159,6 @@ def create_product(request):
         origin=origin,
         batch_code=batch_code,
         planting_area=planting_area,
-        harvest_date=harvest_date,
         quantity_kg=quantity_kg,
         supplier_name=supplier_name,
         owner_wallet=wallet,
@@ -276,7 +274,6 @@ def get_product(request, id):
             "origin": product.origin,
             "batch_code": product.batch_code,
             "planting_area": product.planting_area,
-            "harvest_date": product.harvest_date,
             "quantity_kg": product.quantity_kg,
             "supplier_name": product.supplier_name,
             "owner_wallet": product.owner_wallet,

@@ -17,7 +17,6 @@ export default function Create() {
   const [origin, setOrigin] = useState("");
   const [batchCode, setBatchCode] = useState("");
   const [plantingArea, setPlantingArea] = useState("");
-  const [harvestDate, setHarvestDate] = useState("");
   const [quantityKg, setQuantityKg] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [location, setLocation] = useState("");
@@ -121,7 +120,6 @@ export default function Create() {
     const productOrigin = origin.trim();
     const normalizedBatchCode = batchCode.trim();
     const normalizedPlantingArea = plantingArea.trim();
-    const normalizedHarvestDate = harvestDate.trim();
     const normalizedQuantityKg = quantityKg.trim();
     const normalizedSupplierName = supplierName.trim();
     const normalizedLocation = location.trim();
@@ -143,7 +141,6 @@ export default function Create() {
       formData.append("origin", productOrigin);
       formData.append("batch_code", normalizedBatchCode);
       formData.append("planting_area", normalizedPlantingArea);
-      formData.append("harvest_date", normalizedHarvestDate);
       formData.append("quantity_kg", normalizedQuantityKg);
       formData.append("supplier_name", normalizedSupplierName);
       formData.append("location", normalizedLocation);
@@ -229,10 +226,6 @@ export default function Create() {
                 />
               </label>
 
-              <label className="field">
-                <span className="label">Ngày thu hoạch:</span>
-                <input className="input" type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
-              </label>
 
               <label className="field">
                 <span className="label">Sản lượng (kg):</span>

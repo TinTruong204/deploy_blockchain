@@ -187,10 +187,6 @@ export default function Product() {
                   <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
                 </div>
                 <div className="kv-item">
-                  <p className="kv-label">Ngày thu hoạch:</p>
-                  <p className="kv-value">{data.product?.harvest_date || "N/A"}</p>
-                </div>
-                <div className="kv-item">
                   <p className="kv-label">Sản lượng (kg):</p>
                   <p className="kv-value">{data.product?.quantity_kg || "N/A"}</p>
                 </div>

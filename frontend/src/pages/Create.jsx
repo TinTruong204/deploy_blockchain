@@ -15,6 +15,15 @@ export default function Create() {
   const fileInputRef = useRef(null);
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("");
+  const [batchCode, setBatchCode] = useState("");
+  const [plantingArea, setPlantingArea] = useState("");
+  const [harvestDate, setHarvestDate] = useState("");
+  const [quantityKg, setQuantityKg] = useState("");
+  const [supplierName, setSupplierName] = useState("");
+  const [location, setLocation] = useState("");
+  const [temperatureC, setTemperatureC] = useState("");
+  const [humidityPercent, setHumidityPercent] = useState("");
+  const [note, setNote] = useState("");
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -110,6 +119,15 @@ export default function Create() {
     const formData = new FormData();
     const productName = name.trim();
     const productOrigin = origin.trim();
+    const normalizedBatchCode = batchCode.trim();
+    const normalizedPlantingArea = plantingArea.trim();
+    const normalizedHarvestDate = harvestDate.trim();
+    const normalizedQuantityKg = quantityKg.trim();
+    const normalizedSupplierName = supplierName.trim();
+    const normalizedLocation = location.trim();
+    const normalizedTemperatureC = temperatureC.trim();
+    const normalizedHumidityPercent = humidityPercent.trim();
+    const normalizedNote = note.trim();
     const productId = crypto.randomUUID();
     const statusOnChain = "PLANTED";
 
@@ -123,6 +141,15 @@ export default function Create() {
       formData.append("id", productId);
       formData.append("name", productName);
       formData.append("origin", productOrigin);
+      formData.append("batch_code", normalizedBatchCode);
+      formData.append("planting_area", normalizedPlantingArea);
+      formData.append("harvest_date", normalizedHarvestDate);
+      formData.append("quantity_kg", normalizedQuantityKg);
+      formData.append("supplier_name", normalizedSupplierName);
+      formData.append("location", normalizedLocation);
+      formData.append("temperature_c", normalizedTemperatureC);
+      formData.append("humidity_percent", normalizedHumidityPercent);
+      formData.append("note", normalizedNote);
       formData.append("wallet", wallet);
       formData.append("tx_hash", txHash);
       formData.append("image", image);
@@ -179,6 +206,100 @@ export default function Create() {
                   value={origin}
                   onChange={(e) => setOrigin(e.target.value)}
                   placeholder="VD: Lam Dong, Vietnam"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Mã lô (Batch Code):</span>
+                <input
+                  className="input"
+                  value={batchCode}
+                  onChange={(e) => setBatchCode(e.target.value)}
+                  placeholder="VD: TEA-2026-001"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Khu vực trồng:</span>
+                <input
+                  className="input"
+                  value={plantingArea}
+                  onChange={(e) => setPlantingArea(e.target.value)}
+                  placeholder="VD: Khu A - Đồi 3"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Ngày thu hoạch:</span>
+                <input className="input" type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
+              </label>
+
+              <label className="field">
+                <span className="label">Sản lượng (kg):</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={quantityKg}
+                  onChange={(e) => setQuantityKg(e.target.value)}
+                  placeholder="VD: 1200"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Nhà cung cấp:</span>
+                <input
+                  className="input"
+                  value={supplierName}
+                  onChange={(e) => setSupplierName(e.target.value)}
+                  placeholder="VD: HTX Nông sản Xanh"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Vị trí hiện tại:</span>
+                <input
+                  className="input"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="VD: Kho trung chuyển Đà Lạt"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Nhiệt độ (°C):</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.1"
+                  value={temperatureC}
+                  onChange={(e) => setTemperatureC(e.target.value)}
+                  placeholder="VD: 6.5"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Độ ẩm (%):</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={humidityPercent}
+                  onChange={(e) => setHumidityPercent(e.target.value)}
+                  placeholder="VD: 74"
+                />
+              </label>
+
+              <label className="field full">
+                <span className="label">Ghi chú quản lý:</span>
+                <input
+                  className="input"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="VD: Thu hoạch đợt đầu, chất lượng loại 1"
                 />
               </label>
 

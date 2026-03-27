@@ -11,6 +11,7 @@ import {
 
 export default function Home() {
   const STATUS_FILTER_OPTIONS = ["ALL", "PLANTED", "HARVESTED", "PACKAGED", "SHIPPED", "DELIVERED", "SOLD"];
+  const ITEMS_PER_PAGE = 9;
   const [wallet, setWallet] = useState("");
   const [status, setStatus] = useState("Sẵn sàng kết nối ví để bắt đầu truy xuất nguồn gốc.");
   const [isConnecting, setIsConnecting] = useState(false);
@@ -20,10 +21,9 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
   const [pagination, setPagination] = useState({
     page: 1,
-    page_size: 9,
+    page_size: ITEMS_PER_PAGE,
     total_items: 0,
     total_pages: 0,
     has_next: false,
@@ -60,7 +60,7 @@ export default function Home() {
     setStatusFilter("ALL");
     setPagination({
       page: 1,
-      page_size: pageSize,
+      page_size: ITEMS_PER_PAGE,
       total_items: 0,
       total_pages: 0,
       has_next: false,
@@ -72,7 +72,7 @@ export default function Home() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, pageSize]);
+  }, [search, statusFilter]);
 
   useEffect(() => {
     const syncWalletFromMetaMask = async () => {
@@ -131,7 +131,7 @@ export default function Home() {
         const params = {
           wallet,
           page,
-          page_size: pageSize,
+          page_size: ITEMS_PER_PAGE,
         };
 
         if (trimmedSearch) {
@@ -152,7 +152,7 @@ export default function Home() {
         setProducts(list);
         setPagination({
           page: pageInfo?.page ?? page,
-          page_size: pageInfo?.page_size ?? pageSize,
+          page_size: pageInfo?.page_size ?? ITEMS_PER_PAGE,
           total_items: pageInfo?.total_items ?? list.length,
           total_pages: pageInfo?.total_pages ?? (list.length > 0 ? 1 : 0),
           has_next: pageInfo?.has_next ?? false,
@@ -170,7 +170,7 @@ export default function Home() {
     };
 
     fetchWalletProducts();
-  }, [wallet, search, statusFilter, page, pageSize]);
+  }, [wallet, search, statusFilter, page]);
 
   const toImageUrl = (imagePath) => {
     if (!imagePath) return "";
@@ -276,11 +276,7 @@ export default function Home() {
 
               <label className="control-field">
                 <span>Số mục/trang</span>
-                <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
-                  <option value={6}>6</option>
-                  <option value={9}>9</option>
-                  <option value={12}>12</option>
-                </select>
+                <input type="text" value={ITEMS_PER_PAGE} readOnly />
               </label>
             </div>
           )}

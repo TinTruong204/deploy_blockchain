@@ -20,6 +20,10 @@ export default function Update() {
 
   const [productId, setProductId] = useState(routeId || "");
   const [status, setStatus] = useState(STATUS_OPTIONS[0]);
+  const [location, setLocation] = useState("");
+  const [temperatureC, setTemperatureC] = useState("");
+  const [humidityPercent, setHumidityPercent] = useState("");
+  const [note, setNote] = useState("");
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -117,6 +121,10 @@ export default function Update() {
 
     const formData = new FormData();
     const normalizedId = productId.trim();
+    const normalizedLocation = location.trim();
+    const normalizedTemperatureC = temperatureC.trim();
+    const normalizedHumidityPercent = humidityPercent.trim();
+    const normalizedNote = note.trim();
 
     try {
       setIsSubmitting(true);
@@ -130,6 +138,10 @@ export default function Update() {
 
       formData.append("id", normalizedId);
       formData.append("status", status);
+      formData.append("location", normalizedLocation);
+      formData.append("temperature_c", normalizedTemperatureC);
+      formData.append("humidity_percent", normalizedHumidityPercent);
+      formData.append("note", normalizedNote);
       formData.append("wallet", wallet);
       formData.append("tx_hash", txHash);
       formData.append("image", image);
@@ -189,6 +201,52 @@ export default function Update() {
                     </option>
                   ))}
                 </select>
+              </label>
+
+              <label className="field">
+                <span className="label">Vị trí hiện tại:</span>
+                <input
+                  className="input"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  placeholder="VD: Kho lạnh số 2 - Bình Dương"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Nhiệt độ (°C):</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.1"
+                  value={temperatureC}
+                  onChange={(event) => setTemperatureC(event.target.value)}
+                  placeholder="VD: 5.8"
+                />
+              </label>
+
+              <label className="field">
+                <span className="label">Độ ẩm (%):</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={humidityPercent}
+                  onChange={(event) => setHumidityPercent(event.target.value)}
+                  placeholder="VD: 72"
+                />
+              </label>
+
+              <label className="field full">
+                <span className="label">Ghi chú cập nhật:</span>
+                <input
+                  className="input"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="VD: Đã đóng gói, chuẩn bị chuyển kho"
+                />
               </label>
 
               <div className="field full">

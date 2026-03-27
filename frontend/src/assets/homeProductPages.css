@@ -276,6 +276,13 @@
   box-shadow: 0 0 0 3px rgba(47, 138, 98, 0.16);
 }
 
+.home-page .control-field input[readonly] {
+  text-align: center;
+  background: rgba(240, 247, 242, 0.95);
+  font-weight: 700;
+  color: #2b5646;
+}
+
 .home-page .product-meta-row {
   display: flex;
   justify-content: space-between;
@@ -289,7 +296,7 @@
 
 .home-page .pagination-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
   margin-top: 12px;
 }

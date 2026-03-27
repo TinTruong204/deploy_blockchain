@@ -1,5 +1,7 @@
 import hashlib
 import uuid
+from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -71,6 +73,26 @@ def build_hash(name, origin, status):
     return hashlib.sha256(data.encode()).hexdigest()
 
 
+def parse_optional_decimal(raw_value, field_name):
+    value = (raw_value or "").strip()
+    if not value:
+        return None
+    try:
+        return Decimal(value)
+    except (InvalidOperation, ValueError):
+        raise ValueError(f"{field_name} must be a valid number")
+
+
+def parse_optional_date(raw_value, field_name):
+    value = (raw_value or "").strip()
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise ValueError(f"{field_name} must be in YYYY-MM-DD format")
+
+
 def upload_image_and_get_cid(image):
     pinata_response = upload_to_pinata(image)
     image_cid = pinata_response.get("IpfsHash")
@@ -90,6 +112,11 @@ def create_product(request):
     product_id = (request.data.get("id") or "").strip()
     name = (request.data.get("name") or "").strip()
     origin = (request.data.get("origin") or "").strip()
+    batch_code = (request.data.get("batch_code") or "").strip()
+    planting_area = (request.data.get("planting_area") or "").strip()
+    supplier_name = (request.data.get("supplier_name") or "").strip()
+    location = (request.data.get("location") or "").strip()
+    note = (request.data.get("note") or "").strip()
     wallet = normalize_address(request.data.get("wallet"))
     tx_hash = normalize_tx_hash(request.data.get("tx_hash") or "")
     image = request.FILES.get("image")
@@ -104,6 +131,20 @@ def create_product(request):
     except ValueError:
         return Response({"detail": "id must be a valid UUID"}, status=400)
 
+    try:
+        harvest_date = parse_optional_date(request.data.get("harvest_date"), "harvest_date")
+        quantity_kg = parse_optional_decimal(request.data.get("quantity_kg"), "quantity_kg")
+        temperature_c = parse_optional_decimal(request.data.get("temperature_c"), "temperature_c")
+        humidity_percent = parse_optional_decimal(request.data.get("humidity_percent"), "humidity_percent")
+    except ValueError as error:
+        return Response({"detail": str(error)}, status=400)
+
+    if quantity_kg is not None and quantity_kg < 0:
+        return Response({"detail": "quantity_kg must be >= 0"}, status=400)
+
+    if humidity_percent is not None and (humidity_percent < 0 or humidity_percent > 100):
+        return Response({"detail": "humidity_percent must be between 0 and 100"}, status=400)
+
     if Product.objects.filter(id=product_id).exists():
         return Response({"detail": "Product already exists"}, status=409)
 
@@ -113,7 +154,17 @@ def create_product(request):
         return Response({"detail": f"Image upload to Pinata failed: {error}"}, status=400)
 
     status = "PLANTED"
-    product = Product.objects.create(id=product_id, name=name, origin=origin, owner_wallet=wallet)
+    product = Product.objects.create(
+        id=product_id,
+        name=name,
+        origin=origin,
+        batch_code=batch_code,
+        planting_area=planting_area,
+        harvest_date=harvest_date,
+        quantity_kg=quantity_kg,
+        supplier_name=supplier_name,
+        owner_wallet=wallet,
+    )
     hash_value = build_hash(name, origin, status)
 
     try:
@@ -132,6 +183,10 @@ def create_product(request):
         product=product,
         version=1,
         status=status,
+        location=location,
+        temperature_c=temperature_c,
+        humidity_percent=humidity_percent,
+        note=note,
         image_cid=image_cid,
         hash=hash_value,
         tx_hash=tx_hash,
@@ -144,6 +199,8 @@ def create_product(request):
 def update_product(request):
     product_id = (request.data.get("id") or "").strip()
     status = (request.data.get("status") or "").strip()
+    location = (request.data.get("location") or "").strip()
+    note = (request.data.get("note") or "").strip()
     wallet = normalize_address(request.data.get("wallet"))
     tx_hash = normalize_tx_hash(request.data.get("tx_hash") or "")
     image = request.FILES.get("image")
@@ -156,6 +213,15 @@ def update_product(request):
         return Response({"detail": "wallet and tx_hash are required"}, status=400)
     if not image:
         return Response({"detail": "image is required"}, status=400)
+
+    try:
+        temperature_c = parse_optional_decimal(request.data.get("temperature_c"), "temperature_c")
+        humidity_percent = parse_optional_decimal(request.data.get("humidity_percent"), "humidity_percent")
+    except ValueError as error:
+        return Response({"detail": str(error)}, status=400)
+
+    if humidity_percent is not None and (humidity_percent < 0 or humidity_percent > 100):
+        return Response({"detail": "humidity_percent must be between 0 and 100"}, status=400)
 
     product = get_object_or_404(Product, id=product_id)
 
@@ -186,6 +252,10 @@ def update_product(request):
         product=product,
         version=new_version,
         status=status,
+        location=location,
+        temperature_c=temperature_c,
+        humidity_percent=humidity_percent,
+        note=note,
         image_cid=image_cid,
         hash=hash_value,
         tx_hash=tx_hash,
@@ -204,6 +274,11 @@ def get_product(request, id):
             "id": str(product.id),
             "name": product.name,
             "origin": product.origin,
+            "batch_code": product.batch_code,
+            "planting_area": product.planting_area,
+            "harvest_date": product.harvest_date,
+            "quantity_kg": product.quantity_kg,
+            "supplier_name": product.supplier_name,
             "owner_wallet": product.owner_wallet,
             "created_at": product.created_at,
         },
@@ -211,6 +286,10 @@ def get_product(request, id):
             {
                 "version": v.version,
                 "status": v.status,
+                "location": v.location,
+                "temperature_c": v.temperature_c,
+                "humidity_percent": v.humidity_percent,
+                "note": v.note,
                 "image": cid_to_gateway_url(v.image_cid),
                 "hash": v.hash,
                 "tx_hash": v.tx_hash,
@@ -266,11 +345,14 @@ def get_products_by_wallet(request):
                 "id": str(product.id),
                 "name": product.name,
                 "origin": product.origin,
+                "batch_code": product.batch_code,
+                "supplier_name": product.supplier_name,
                 "owner_wallet": product.owner_wallet,
                 "created_at": product.created_at,
                 "latest_version": {
                     "version": latest.version,
                     "status": latest.status,
+                    "location": latest.location,
                     "image": cid_to_gateway_url(latest.image_cid),
                     "tx_hash": latest.tx_hash,
                     "created_at": latest.created_at,

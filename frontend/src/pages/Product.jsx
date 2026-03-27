@@ -178,6 +178,26 @@ export default function Product() {
                   <p className="kv-label">Trạng thái hiện tại:</p>
                   <p className="kv-value">{latestVersion?.status || "N/A"}</p>
                 </div>
+                <div className="kv-item">
+                  <p className="kv-label">Mã lô:</p>
+                  <p className="kv-value">{data.product?.batch_code || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Khu vực trồng:</p>
+                  <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Ngày thu hoạch:</p>
+                  <p className="kv-value">{data.product?.harvest_date || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Sản lượng (kg):</p>
+                  <p className="kv-value">{data.product?.quantity_kg || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Nhà cung cấp:</p>
+                  <p className="kv-value">{data.product?.supplier_name || "N/A"}</p>
+                </div>
               </div>
 
               {isOwner && (
@@ -228,6 +248,10 @@ export default function Product() {
                             alt={`Product version ${version.version}`}
                           />
                         )}
+                        <p className="mono">Location: {version.location || "N/A"}</p>
+                        <p className="mono">Temperature (C): {version.temperature_c ?? "N/A"}</p>
+                        <p className="mono">Humidity (%): {version.humidity_percent ?? "N/A"}</p>
+                        <p className="mono">Note: {version.note || "N/A"}</p>
                         <p className="mono">Hash: {version.hash}</p>
                         <p className="mono">Tx: {version.tx_hash}</p>
                       </div>

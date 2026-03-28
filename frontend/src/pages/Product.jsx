@@ -32,6 +32,12 @@ export default function Product() {
     return `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(traceUrl)}`;
   }, [traceUrl]);
 
+  const versionCount = data?.versions?.length || 0;
+
+  const latestRecordedAt = useMemo(() => {
+    return latestVersion?.created_at || data?.product?.created_at || "";
+  }, [latestVersion, data]);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -67,6 +73,31 @@ export default function Product() {
       return imagePath;
     }
     return imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  };
+
+  const shortenHash = (value) => {
+    if (!value) return "N/A";
+    if (value.length <= 22) return value;
+    return `${value.slice(0, 12)}...${value.slice(-8)}`;
+  };
+
+  const shortenWallet = (value) => {
+    if (!value) return "N/A";
+    if (value.length <= 14) return value;
+    return `${value.slice(0, 8)}...${value.slice(-4)}`;
   };
 
   const downloadQr = () => {
@@ -142,7 +173,12 @@ export default function Product() {
     <div className="product-page">
       <div className="product-shell">
         <div className="top-row">
-          <h1 className="title">Product Trace</h1>
+          <div className="title-wrap">
+            <span className="trace-chip">Trace Detail</span>
+            <h1 className="title">{data?.product?.name || "Product Trace"}</h1>
+            <p className="title-sub">Toàn bộ hành trình của nông sản được cập nhật theo từng phiên bản.</p>
+          </div>
+
           <div className="top-actions">
             <span className="id-tag">Product ID: #{id}</span>
             <Link className="btn-link" to="/">
@@ -164,6 +200,21 @@ export default function Product() {
         {!loading && !error && data && (
           <section className="grid">
             <article className="card">
+              <div className="insight-grid">
+                <div className="insight-item">
+                  <p className="insight-label">Trạng thái mới nhất</p>
+                  <p className="insight-value">{latestVersion?.status || "N/A"}</p>
+                </div>
+                <div className="insight-item">
+                  <p className="insight-label">Tổng phiên bản</p>
+                  <p className="insight-value">{versionCount}</p>
+                </div>
+                <div className="insight-item">
+                  <p className="insight-label">Cập nhật gần nhất</p>
+                  <p className="insight-value">{formatDateTime(latestRecordedAt)}</p>
+                </div>
+              </div>
+
               <h2 className="section-title">Thông tin chung</h2>
               <div className="kv">
                 <div className="kv-item">
@@ -193,6 +244,12 @@ export default function Product() {
                 <div className="kv-item">
                   <p className="kv-label">Nhà cung cấp:</p>
                   <p className="kv-value">{data.product?.supplier_name || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Ví sở hữu:</p>
+                  <p className="kv-value" title={data.product?.owner_wallet || ""}>
+                    {shortenWallet(data.product?.owner_wallet)}
+                  </p>
                 </div>
               </div>
 
@@ -236,6 +293,11 @@ export default function Product() {
                         <span className="status-pill">{version.status}</span>
                       </div>
 
+                      <div className="timeline-meta">
+                        <span>{formatDateTime(version.created_at)}</span>
+                        <span>{version.location || "N/A"}</span>
+                      </div>
+
                       <div className="timeline-body">
                         {version.image && (
                           <img
@@ -244,12 +306,22 @@ export default function Product() {
                             alt={`Product version ${version.version}`}
                           />
                         )}
-                        <p className="mono">Location: {version.location || "N/A"}</p>
-                        <p className="mono">Temperature (C): {version.temperature_c ?? "N/A"}</p>
-                        <p className="mono">Humidity (%): {version.humidity_percent ?? "N/A"}</p>
-                        <p className="mono">Note: {version.note || "N/A"}</p>
-                        <p className="mono">Hash: {version.hash}</p>
-                        <p className="mono">Tx: {version.tx_hash}</p>
+
+                        <div className="metric-grid">
+                          <div className="metric-item">
+                            <p className="metric-label">Nhiệt độ</p>
+                            <p className="metric-value">{version.temperature_c ?? "N/A"} C</p>
+                          </div>
+                          <div className="metric-item">
+                            <p className="metric-label">Độ ẩm</p>
+                            <p className="metric-value">{version.humidity_percent ?? "N/A"}%</p>
+                          </div>
+                        </div>
+
+                        <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
+
+                        <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
+                        <p className="mono" title={version.tx_hash || ""}>Tx: {shortenHash(version.tx_hash)}</p>
                       </div>
                     </div>
                   ))}

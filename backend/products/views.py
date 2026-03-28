@@ -35,6 +35,9 @@ HASH_FIELD_ORDER = [
     "image_sha256",
 ]
 
+# Match JavaScript encodeURIComponent behavior for canonical payload generation.
+JS_ENCODE_URI_COMPONENT_SAFE = "-_.!~*'()"
+
 
 def get_blockchain_ctx():
     from .blockchain import contract, contract_address, w3
@@ -80,9 +83,9 @@ def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_prod
 
     onchain_uuid = fn_args.get("_uuid")
     onchain_hash = fn_args.get("_hash") or fn_args.get("_newHash")
-    if str(onchain_uuid) != str(expected_product_id):
+    if str(onchain_uuid).strip().lower() != str(expected_product_id).strip().lower():
         raise ValueError("Product ID in transaction does not match request")
-    if str(onchain_hash) != str(expected_hash):
+    if str(onchain_hash).strip().lower() != str(expected_hash).strip().lower():
         raise ValueError("Product hash in transaction does not match request")
 
     return receipt
@@ -158,7 +161,7 @@ def build_canonical_hash_payload(payload):
 
     for field in HASH_FIELD_ORDER:
         normalized = normalize_hash_field(field, payload.get(field, ""))
-        parts.append(f"{field}={quote(str(normalized), safe='')}")
+        parts.append(f"{field}={quote(str(normalized), safe=JS_ENCODE_URI_COMPONENT_SAFE)}")
 
     return "|".join(parts)
 

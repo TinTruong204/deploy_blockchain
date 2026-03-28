@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import API from "../services/api";
 import "../assets/formPages.css";
 import {
+  buildImageFileHash,
   buildProductHash,
   connectWalletWithEthers,
   getReadableWalletError,
@@ -131,9 +132,30 @@ export default function Update() {
       setMessage("Vui lòng xác nhận giao dịch cập nhật trên MetaMask...");
 
       const productResponse = await API.get(`/product/${normalizedId}/`);
-      const productName = productResponse?.data?.product?.name || "";
-      const productOrigin = productResponse?.data?.product?.origin || "";
-      const hashValue = await buildProductHash(productName, productOrigin, status);
+      const product = productResponse?.data?.product || {};
+      const versions = productResponse?.data?.versions || [];
+      const latestVersion = versions.length ? versions[versions.length - 1] : null;
+      const nextVersion = (latestVersion?.version || 0) + 1;
+      const imageHash = await buildImageFileHash(image);
+
+      const hashValue = await buildProductHash({
+        action: "UPDATE",
+        id: normalizedId,
+        name: product?.name || "",
+        origin: product?.origin || "",
+        batch_code: product?.batch_code || "",
+        planting_area: product?.planting_area || "",
+        quantity_kg: product?.quantity_kg ?? "",
+        supplier_name: product?.supplier_name || "",
+        owner_wallet: product?.owner_wallet || wallet,
+        version: nextVersion,
+        status,
+        location: normalizedLocation,
+        temperature_c: normalizedTemperatureC,
+        humidity_percent: normalizedHumidityPercent,
+        note: normalizedNote,
+        image_sha256: imageHash,
+      });
       const txHash = await updateProductOnChain(normalizedId, hashValue);
 
       formData.append("id", normalizedId);

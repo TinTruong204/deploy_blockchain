@@ -2,6 +2,7 @@ import hashlib
 import uuid
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from urllib.parse import quote
 
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -14,6 +15,25 @@ from .pinata import upload_to_pinata
 
 
 PINATA_GATEWAY_PREFIX = "https://gateway.pinata.cloud/ipfs/"
+
+HASH_FIELD_ORDER = [
+    "action",
+    "id",
+    "name",
+    "origin",
+    "batch_code",
+    "planting_area",
+    "quantity_kg",
+    "supplier_name",
+    "owner_wallet",
+    "version",
+    "status",
+    "location",
+    "temperature_c",
+    "humidity_percent",
+    "note",
+    "image_sha256",
+]
 
 
 def get_blockchain_ctx():
@@ -69,8 +89,83 @@ def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_prod
 
 
 def build_hash(name, origin, status):
-    data = f"{name}{origin}{status}"
-    return hashlib.sha256(data.encode()).hexdigest()
+    payload = {
+        "action": "LEGACY",
+        "id": "",
+        "name": name,
+        "origin": origin,
+        "batch_code": "",
+        "planting_area": "",
+        "quantity_kg": "",
+        "supplier_name": "",
+        "owner_wallet": "",
+        "version": "",
+        "status": status,
+        "location": "",
+        "temperature_c": "",
+        "humidity_percent": "",
+        "note": "",
+        "image_sha256": "",
+    }
+    return build_business_hash(payload)
+
+
+def decimal_to_hash_string(value):
+    if value is None:
+        return ""
+
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
+
+def normalize_hash_field(field, value):
+    text = "" if value is None else str(value).strip()
+
+    if field == "owner_wallet":
+        return normalize_address(text)
+
+    if field in {"status", "action"}:
+        return text.upper()
+
+    if field == "id":
+        return text.lower()
+
+    if field in {"quantity_kg", "temperature_c", "humidity_percent"}:
+        if value is None:
+            return ""
+        if isinstance(value, Decimal):
+            return decimal_to_hash_string(value)
+        try:
+            return decimal_to_hash_string(Decimal(text))
+        except (InvalidOperation, ValueError):
+            return text
+
+    if field == "version":
+        if text == "":
+            return ""
+        try:
+            return str(int(text))
+        except ValueError:
+            return text
+
+    return text
+
+
+def build_canonical_hash_payload(payload):
+    parts = []
+
+    for field in HASH_FIELD_ORDER:
+        normalized = normalize_hash_field(field, payload.get(field, ""))
+        parts.append(f"{field}={quote(str(normalized), safe='')}")
+
+    return "|".join(parts)
+
+
+def build_business_hash(payload):
+    canonical = build_canonical_hash_payload(payload)
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def parse_optional_decimal(raw_value, field_name):
@@ -99,6 +194,15 @@ def upload_image_and_get_cid(image):
     if not image_cid:
         raise ValueError(f"Pinata upload failed: {pinata_response}")
     return image_cid
+
+
+def build_file_sha256(uploaded_file):
+    hasher = hashlib.sha256()
+    for chunk in uploaded_file.chunks():
+        hasher.update(chunk)
+
+    uploaded_file.seek(0)
+    return hasher.hexdigest()
 
 
 def cid_to_gateway_url(image_cid):
@@ -147,6 +251,8 @@ def create_product(request):
     if Product.objects.filter(id=product_id).exists():
         return Response({"detail": "Product already exists"}, status=409)
 
+    image_sha256 = build_file_sha256(image)
+
     try:
         image_cid = upload_image_and_get_cid(image)
     except Exception as error:
@@ -163,7 +269,26 @@ def create_product(request):
         supplier_name=supplier_name,
         owner_wallet=wallet,
     )
-    hash_value = build_hash(name, origin, status)
+    hash_value = build_business_hash(
+        {
+            "action": "CREATE",
+            "id": str(product.id),
+            "name": name,
+            "origin": origin,
+            "batch_code": batch_code,
+            "planting_area": planting_area,
+            "quantity_kg": quantity_kg,
+            "supplier_name": supplier_name,
+            "owner_wallet": wallet,
+            "version": 1,
+            "status": status,
+            "location": location,
+            "temperature_c": temperature_c,
+            "humidity_percent": humidity_percent,
+            "note": note,
+            "image_sha256": image_sha256,
+        }
+    )
 
     try:
         verify_contract_tx(
@@ -223,6 +348,8 @@ def update_product(request):
 
     product = get_object_or_404(Product, id=product_id)
 
+    image_sha256 = build_file_sha256(image)
+
     try:
         image_cid = upload_image_and_get_cid(image)
     except Exception as error:
@@ -230,7 +357,26 @@ def update_product(request):
 
     latest = ProductVersion.objects.filter(product=product).order_by("-version").first()
     new_version = latest.version + 1 if latest else 1
-    hash_value = build_hash(product.name, product.origin, status)
+    hash_value = build_business_hash(
+        {
+            "action": "UPDATE",
+            "id": str(product.id),
+            "name": product.name,
+            "origin": product.origin,
+            "batch_code": product.batch_code,
+            "planting_area": product.planting_area,
+            "quantity_kg": product.quantity_kg,
+            "supplier_name": product.supplier_name,
+            "owner_wallet": product.owner_wallet,
+            "version": new_version,
+            "status": status,
+            "location": location,
+            "temperature_c": temperature_c,
+            "humidity_percent": humidity_percent,
+            "note": note,
+            "image_sha256": image_sha256,
+        }
+    )
 
     if normalize_address(product.owner_wallet) != wallet:
         return Response({"detail": "Only product owner can update this product"}, status=403)

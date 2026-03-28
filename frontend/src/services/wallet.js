@@ -5,6 +5,25 @@ const WALLET_STORAGE_KEY = "producttrace_wallet";
 const PRODUCT_TRACE_CONTRACT_ADDRESS =
   import.meta.env.VITE_PRODUCT_TRACE_CONTRACT_ADDRESS || "0x3f610734fFf19Aa231fd3B0C8C83Eed61B2df386";
 
+const HASH_FIELD_ORDER = [
+  "action",
+  "id",
+  "name",
+  "origin",
+  "batch_code",
+  "planting_area",
+  "quantity_kg",
+  "supplier_name",
+  "owner_wallet",
+  "version",
+  "status",
+  "location",
+  "temperature_c",
+  "humidity_percent",
+  "note",
+  "image_sha256",
+];
+
 const getInjectedProvider = () => {
   if (typeof window === "undefined") return null;
   return window.ethereum || null;
@@ -38,6 +57,61 @@ const toHex = (buffer) => {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+};
+
+const normalizeDecimalString = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const sign = raw.startsWith("-") ? "-" : "";
+  const unsigned = raw.startsWith("-") || raw.startsWith("+") ? raw.slice(1) : raw;
+
+  if (!/^\d+(\.\d+)?$/.test(unsigned)) {
+    return raw;
+  }
+
+  let [integerPart, decimalPart = ""] = unsigned.split(".");
+  integerPart = integerPart.replace(/^0+(?=\d)/, "");
+  if (!integerPart) integerPart = "0";
+  decimalPart = decimalPart.replace(/0+$/, "");
+
+  return decimalPart ? `${sign}${integerPart}.${decimalPart}` : `${sign}${integerPart}`;
+};
+
+const normalizeHashField = (field, value) => {
+  const text = String(value ?? "").trim();
+
+  if (field === "owner_wallet") {
+    return text.toLowerCase();
+  }
+
+  if (field === "status" || field === "action") {
+    return text.toUpperCase();
+  }
+
+  if (field === "id") {
+    return text.toLowerCase();
+  }
+
+  if (field === "quantity_kg" || field === "temperature_c" || field === "humidity_percent") {
+    return normalizeDecimalString(text);
+  }
+
+  if (field === "version") {
+    const normalized = Number.parseInt(text, 10);
+    return Number.isNaN(normalized) ? text : String(normalized);
+  }
+
+  return text;
+};
+
+const buildCanonicalPayload = (payload) => {
+  const safePayload = payload || {};
+
+  return HASH_FIELD_ORDER.map((field) => {
+    const normalizedValue = normalizeHashField(field, safePayload[field]);
+    return `${field}=${encodeURIComponent(normalizedValue)}`;
+  }).join("|");
 };
 
 const getWalletErrorCode = (error) => {
@@ -81,10 +155,17 @@ export const getReadableWalletError = (error, fallbackMessage = "Giao dá»‹ch thá
   return fallbackMessage;
 };
 
-export const buildProductHash = async (name, origin, status) => {
-  const data = `${name}${origin}${status}`;
+export const buildProductHash = async (payload) => {
+  const data = buildCanonicalPayload(payload);
   const encoded = new TextEncoder().encode(data);
   const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return toHex(digest);
+};
+
+export const buildImageFileHash = async (file) => {
+  if (!file) return "";
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
   return toHex(digest);
 };
 

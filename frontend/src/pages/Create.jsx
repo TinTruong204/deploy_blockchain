@@ -4,6 +4,7 @@ import API from "../services/api";
 import "../assets/formPages.css";
 import {
   addProductOnChain,
+  buildImageFileHash,
   buildProductHash,
   connectWalletWithEthers,
   getReadableWalletError,
@@ -133,7 +134,25 @@ export default function Create() {
       setIsSubmitting(true);
       setStatus("Vui lòng xác nhận giao dịch tạo sản phẩm trên MetaMask...");
 
-      const hashValue = await buildProductHash(productName, productOrigin, statusOnChain);
+      const imageHash = await buildImageFileHash(image);
+      const hashValue = await buildProductHash({
+        action: "CREATE",
+        id: productId,
+        name: productName,
+        origin: productOrigin,
+        batch_code: normalizedBatchCode,
+        planting_area: normalizedPlantingArea,
+        quantity_kg: normalizedQuantityKg,
+        supplier_name: normalizedSupplierName,
+        owner_wallet: wallet,
+        version: 1,
+        status: statusOnChain,
+        location: normalizedLocation,
+        temperature_c: normalizedTemperatureC,
+        humidity_percent: normalizedHumidityPercent,
+        note: normalizedNote,
+        image_sha256: imageHash,
+      });
       const txHash = await addProductOnChain(productId, hashValue);
 
       formData.append("id", productId);

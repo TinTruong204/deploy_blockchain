@@ -19,7 +19,6 @@ from .pinata import upload_to_pinata
 
 
 PINATA_GATEWAY_PREFIX = "https://gateway.pinata.cloud/ipfs/"
-PINATA_GATEWAY_TOKEN = os.getenv("PINATA_GATEWAY_TOKEN", "").strip()
 PINATA_JWT = os.getenv("PINATA_JWT", "").strip()
 
 IPFS_GATEWAY_PREFIXES = [
@@ -190,12 +189,8 @@ def build_image_sha256_from_cid(image_cid):
         hasher = hashlib.sha256()
         try:
             request = Request(image_url)
-            if image_url.startswith("https://gateway.pinata.cloud/"):
-                if PINATA_GATEWAY_TOKEN:
-                    separator = "&" if "?" in image_url else "?"
-                    request = Request(f"{image_url}{separator}pinataGatewayToken={PINATA_GATEWAY_TOKEN}")
-                elif PINATA_JWT:
-                    request.add_header("Authorization", f"Bearer {PINATA_JWT}")
+            if image_url.startswith("https://gateway.pinata.cloud/") and PINATA_JWT:
+                request.add_header("Authorization", f"Bearer {PINATA_JWT}")
 
             with urlopen(request, timeout=15) as response:
                 while True:

@@ -178,9 +178,6 @@ def build_image_sha256_from_cid(image_cid):
     if not image_cid:
         raise ValueError("Missing image CID")
 
-    if not image_cid:
-        raise ValueError("Invalid image CID")
-
     image_urls = [f"{prefix}{image_cid}" for prefix in IPFS_GATEWAY_PREFIXES]
     errors = []
     hasher = hashlib.sha256()
@@ -192,7 +189,7 @@ def build_image_sha256_from_cid(image_cid):
             if image_url.startswith("https://gateway.pinata.cloud/") and PINATA_JWT:
                 request.add_header("Authorization", f"Bearer {PINATA_JWT}")
 
-            with urlopen(request, timeout=15) as response:
+            with urlopen(request, timeout=45) as response:
                 while True:
                     chunk = response.read(8192)
                     if not chunk:

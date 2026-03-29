@@ -2,7 +2,9 @@ import hashlib
 import uuid
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
+from urllib.request import urlopen
 
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -89,6 +91,216 @@ def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_prod
         raise ValueError("Product hash in transaction does not match request")
 
     return receipt
+
+
+def verify_product_version_onchain(product_id, version_item):
+    contract, contract_address, w3 = get_blockchain_ctx()
+
+    tx_hash = normalize_tx_hash(version_item.tx_hash)
+    if not tx_hash:
+        return {
+            "ok": False,
+            "reason": "Missing tx_hash",
+        }
+
+    try:
+        tx = w3.eth.get_transaction(tx_hash)
+        receipt = w3.eth.get_transaction_receipt(tx_hash)
+    except Exception as error:
+        return {
+            "ok": False,
+            "reason": f"Cannot load transaction: {error}",
+        }
+
+    if receipt.status != 1:
+        return {
+            "ok": False,
+            "reason": "On-chain transaction failed",
+        }
+
+    tx_to = tx.get("to")
+    if normalize_address(tx_to) != normalize_address(contract_address):
+        return {
+            "ok": False,
+            "reason": "Transaction target is not ProductTrace contract",
+        }
+
+    try:
+        fn, fn_args = contract.decode_function_input(tx.get("input", "0x"))
+    except Exception as error:
+        return {
+            "ok": False,
+            "reason": f"Cannot decode transaction input: {error}",
+        }
+
+    expected_fn_name = "addProduct" if version_item.version == 1 else "updateProduct"
+    if fn.fn_name != expected_fn_name:
+        return {
+            "ok": False,
+            "reason": f"Unexpected function {fn.fn_name}, expected {expected_fn_name}",
+        }
+
+    onchain_uuid = str((fn_args.get("_uuid") or "")).strip().lower()
+    expected_uuid = str(product_id).strip().lower()
+    if onchain_uuid != expected_uuid:
+        return {
+            "ok": False,
+            "reason": "Product id mismatch between data and blockchain",
+        }
+
+    onchain_hash = str((fn_args.get("_hash") or fn_args.get("_newHash") or "")).strip().lower()
+    if not onchain_hash:
+        return {
+            "ok": False,
+            "reason": "Missing on-chain hash in transaction input",
+            "onchain_hash": "",
+        }
+
+    return {
+        "ok": True,
+        "reason": "Verified",
+        "tx_from": tx.get("from"),
+        "tx_hash": tx_hash,
+        "onchain_hash": onchain_hash,
+    }
+
+
+def build_image_sha256_from_cid(image_cid):
+    if not image_cid:
+        raise ValueError("Missing image CID")
+
+    image_url = cid_to_gateway_url(image_cid)
+    if not image_url:
+        raise ValueError("Invalid image CID")
+
+    hasher = hashlib.sha256()
+    try:
+        with urlopen(image_url, timeout=15) as response:
+            while True:
+                chunk = response.read(8192)
+                if not chunk:
+                    break
+                hasher.update(chunk)
+    except (HTTPError, URLError, TimeoutError) as error:
+        raise ValueError(f"Cannot fetch image from CID: {error}") from error
+
+    return hasher.hexdigest()
+
+
+def build_expected_hash_for_version(product, version_item):
+    image_sha256 = build_image_sha256_from_cid(version_item.image_cid)
+    payload = {
+        "action": "CREATE" if version_item.version == 1 else "UPDATE",
+        "id": str(product.id),
+        "name": product.name,
+        "origin": product.origin,
+        "batch_code": product.batch_code,
+        "planting_area": product.planting_area,
+        "quantity_kg": product.quantity_kg,
+        "supplier_name": product.supplier_name,
+        "owner_wallet": product.owner_wallet,
+        "version": version_item.version,
+        "status": version_item.status,
+        "location": version_item.location,
+        "temperature_c": version_item.temperature_c,
+        "humidity_percent": version_item.humidity_percent,
+        "note": version_item.note,
+        "image_sha256": image_sha256,
+    }
+    return build_business_hash(payload)
+
+
+def verify_product_versions(product):
+    versions = ProductVersion.objects.filter(product=product).order_by("version")
+    results = []
+
+    for version_item in versions:
+        verify_result = verify_product_version_onchain(product.id, version_item)
+        recalculated_hash = None
+        stored_hash = str(version_item.hash or "").strip().lower()
+
+        if not verify_result.get("ok"):
+            results.append(
+                {
+                    "version": version_item.version,
+                    "tx_hash": version_item.tx_hash,
+                    "ok": False,
+                    "warning": verify_result.get("reason"),
+                    "reason": verify_result.get("reason"),
+                    "onchain_hash": verify_result.get("onchain_hash"),
+                    "data_hash": stored_hash,
+                    "recalculated_hash": None,
+                }
+            )
+            continue
+
+        try:
+            recalculated_hash = build_expected_hash_for_version(product, version_item)
+        except Exception as error:
+            verify_result = {
+                "ok": False,
+                "reason": f"Cannot recompute hash from current DB data: {error}",
+                "onchain_hash": verify_result.get("onchain_hash"),
+                "data_hash": stored_hash,
+            }
+
+        if recalculated_hash:
+            onchain_hash = str(verify_result.get("onchain_hash") or "").strip().lower()
+            recalculated_hash_lower = recalculated_hash.lower()
+
+            if not onchain_hash:
+                verify_result = {
+                    "ok": False,
+                    "reason": "Missing on-chain hash in transaction input",
+                    "onchain_hash": onchain_hash,
+                    "data_hash": stored_hash,
+                    "recalculated_hash": recalculated_hash_lower,
+                }
+            elif onchain_hash != recalculated_hash_lower:
+                verify_result = {
+                    "ok": False,
+                    "reason": "Recalculated hash from DB data does not match blockchain",
+                    "onchain_hash": onchain_hash,
+                    "data_hash": stored_hash,
+                    "recalculated_hash": recalculated_hash_lower,
+                }
+            elif stored_hash != recalculated_hash_lower:
+                verify_result = {
+                    "ok": False,
+                    "reason": "Stored DB hash does not match recalculated hash",
+                    "onchain_hash": onchain_hash,
+                    "data_hash": stored_hash,
+                    "recalculated_hash": recalculated_hash_lower,
+                }
+            else:
+                verify_result = {
+                    "ok": True,
+                    "reason": "Verified",
+                    "onchain_hash": onchain_hash,
+                    "data_hash": stored_hash,
+                    "recalculated_hash": recalculated_hash_lower,
+                }
+
+        results.append(
+            {
+                "version": version_item.version,
+                "tx_hash": version_item.tx_hash,
+                "ok": verify_result.get("ok", False),
+                "warning": None if verify_result.get("ok") else verify_result.get("reason"),
+                "reason": verify_result.get("reason"),
+                "onchain_hash": verify_result.get("onchain_hash"),
+                "data_hash": verify_result.get("data_hash") or version_item.hash,
+                "recalculated_hash": verify_result.get("recalculated_hash"),
+            }
+        )
+
+    violated_versions = [item["version"] for item in results if not item["ok"]]
+    return {
+        "total_versions": len(results),
+        "violated_versions": violated_versions,
+        "is_safe": len(violated_versions) == 0,
+        "results": results,
+    }
 
 
 def build_hash(name, origin, status):
@@ -534,5 +746,20 @@ def get_products_by_wallet(request):
                 "search": search,
                 "status": status_filter,
             },
+        }
+    )
+
+
+@api_view(["GET"])
+def verify_product_versions_view(request, id):
+    product = get_object_or_404(Product, id=id)
+    verify_result = verify_product_versions(product)
+
+    return Response(
+        {
+            "product_id": str(product.id),
+            "product_name": product.name,
+            "owner_wallet": product.owner_wallet,
+            **verify_result,
         }
     )

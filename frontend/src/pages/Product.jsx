@@ -7,6 +7,8 @@ import "../assets/homeProductPages.css";
 export default function Product() {
   const { id } = useParams();
   const [data, setData] = useState(null);
+  const [integrity, setIntegrity] = useState(null);
+  const [integrityLoading, setIntegrityLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentWallet, setCurrentWallet] = useState("");
@@ -38,17 +40,50 @@ export default function Product() {
     return latestVersion?.created_at || data?.product?.created_at || "";
   }, [latestVersion, data]);
 
+  const tamperedVersionMap = useMemo(() => {
+    const map = new Map();
+    const verifyResults = integrity?.results || [];
+
+    verifyResults.forEach((item) => {
+      if (item?.ok === false) {
+        map.set(item.version, item.warning || item.reason || "Integrity check failed.");
+      }
+    });
+
+    return map;
+  }, [integrity]);
+
+  const violatedCount = integrity?.violated_versions?.length || 0;
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response = await API.get(`/product/${id}/`);
-        setData(response.data);
+        setIntegrityLoading(true);
+        setIntegrity(null);
+
+        const [productResponse, verifyResponse] = await Promise.allSettled([
+          API.get(`/product/${id}/`),
+          API.get(`/product/${id}/verify/`),
+        ]);
+
+        if (productResponse.status === "fulfilled") {
+          setData(productResponse.value.data);
+        } else {
+          throw productResponse.reason;
+        }
+
+        if (verifyResponse.status === "fulfilled") {
+          setIntegrity(verifyResponse.value.data);
+        } else {
+          setIntegrity(null);
+        }
       } catch (fetchError) {
         setError(fetchError?.response?.data?.detail || "Không thể tải thông tin sản phẩm.");
       } finally {
+        setIntegrityLoading(false);
         setLoading(false);
       }
     };
@@ -198,7 +233,20 @@ export default function Product() {
         {error && !loading && <div className="error">{error}</div>}
 
         {!loading && !error && data && (
-          <section className="grid">
+          <>
+            {integrityLoading ? (
+              <div className="integrity-info">Đang kiểm tra tính toàn vẹn dữ liệu với blockchain...</div>
+            ) : integrity?.is_safe === false ? (
+              <div className="integrity-alert">
+                Cảnh báo: phát hiện {violatedCount} phiên bản có dấu hiệu bị sửa dữ liệu hoặc không khớp blockchain.
+              </div>
+            ) : integrity?.is_safe === true ? (
+              <div className="integrity-ok">Dữ liệu tất cả phiên bản khớp với blockchain.</div>
+            ) : (
+              <div className="integrity-info">Không thể lấy trạng thái kiểm tra integrity ở thời điểm hiện tại.</div>
+            )}
+
+            <section className="grid">
             <article className="card">
               <div className="insight-grid">
                 <div className="insight-item">
@@ -286,11 +334,17 @@ export default function Product() {
                 <div className="empty">Chưa có phiên bản nào cho sản phẩm này.</div>
               ) : (
                 <div className="timeline">
-                  {data.versions.map((version) => (
-                    <div className="timeline-item" key={version.version}>
+                  {data.versions.map((version) => {
+                    const tamperReason = tamperedVersionMap.get(version.version);
+
+                    return (
+                    <div className={`timeline-item ${tamperReason ? "timeline-item-alert" : ""}`} key={version.version}>
                       <div className="timeline-head">
                         <strong>Version {version.version}</strong>
-                        <span className="status-pill">{version.status}</span>
+                        <div className="timeline-head-right">
+                          {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
+                          <span className="status-pill">{version.status}</span>
+                        </div>
                       </div>
 
                       <div className="timeline-meta">
@@ -322,14 +376,16 @@ export default function Product() {
 
                         <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
                         <p className="mono" title={version.tx_hash || ""}>Tx: {shortenHash(version.tx_hash)}</p>
+                        {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
 
             </article>
-          </section>
+            </section>
+          </>
         )}
       </div>
     </div>

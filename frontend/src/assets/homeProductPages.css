@@ -569,6 +569,33 @@
   color: #7a3737;
 }
 
+.product-page .integrity-alert,
+.product-page .integrity-ok,
+.product-page .integrity-info {
+  border-radius: 16px;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid;
+}
+
+.product-page .integrity-alert {
+  border-color: #efc7a7;
+  background: #fff6ed;
+  color: #7a4b22;
+}
+
+.product-page .integrity-ok {
+  border-color: #cbe5d5;
+  background: #f1faf5;
+  color: #215338;
+}
+
+.product-page .integrity-info {
+  border-color: #d6e8de;
+  background: #f6fbf7;
+  color: #355f4f;
+}
+
 .product-page .timeline {
   display: grid;
   gap: 10px;
@@ -590,6 +617,13 @@
   flex-wrap: wrap;
 }
 
+.product-page .timeline-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .product-page .status-pill {
   border-radius: 999px;
   padding: 5px 10px;
@@ -605,6 +639,34 @@
   margin-top: 10px;
   display: grid;
   gap: 10px;
+}
+
+.product-page .timeline-item-alert {
+  border-color: #e8bcbc;
+  background: #fff8f8;
+}
+
+.product-page .tamper-pill {
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #ffe8e8;
+  color: #8a2d2d;
+  border: 1px solid #efc0c0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.product-page .tamper-reason {
+  margin: 0;
+  border-radius: 10px;
+  background: #fff2f2;
+  border: 1px solid #efc9c9;
+  padding: 10px;
+  color: #7f3232;
+  line-height: 1.5;
+  font-size: 13px;
 }
 
 .product-page .timeline-meta {

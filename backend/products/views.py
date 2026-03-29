@@ -4,7 +4,9 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+import os
 
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -17,6 +19,14 @@ from .pinata import upload_to_pinata
 
 
 PINATA_GATEWAY_PREFIX = "https://gateway.pinata.cloud/ipfs/"
+PINATA_GATEWAY_TOKEN = os.getenv("PINATA_GATEWAY_TOKEN", "").strip()
+PINATA_JWT = os.getenv("PINATA_JWT", "").strip()
+
+IPFS_GATEWAY_PREFIXES = [
+    "https://gateway.pinata.cloud/ipfs/",
+    "https://ipfs.io/ipfs/",
+    "https://cloudflare-ipfs.com/ipfs/",
+]
 
 HASH_FIELD_ORDER = [
     "action",
@@ -169,22 +179,37 @@ def build_image_sha256_from_cid(image_cid):
     if not image_cid:
         raise ValueError("Missing image CID")
 
-    image_url = cid_to_gateway_url(image_cid)
-    if not image_url:
+    if not image_cid:
         raise ValueError("Invalid image CID")
 
+    image_urls = [f"{prefix}{image_cid}" for prefix in IPFS_GATEWAY_PREFIXES]
+    errors = []
     hasher = hashlib.sha256()
-    try:
-        with urlopen(image_url, timeout=15) as response:
-            while True:
-                chunk = response.read(8192)
-                if not chunk:
-                    break
-                hasher.update(chunk)
-    except (HTTPError, URLError, TimeoutError) as error:
-        raise ValueError(f"Cannot fetch image from CID: {error}") from error
 
-    return hasher.hexdigest()
+    for image_url in image_urls:
+        hasher = hashlib.sha256()
+        try:
+            request = Request(image_url)
+            if image_url.startswith("https://gateway.pinata.cloud/"):
+                if PINATA_GATEWAY_TOKEN:
+                    separator = "&" if "?" in image_url else "?"
+                    request = Request(f"{image_url}{separator}pinataGatewayToken={PINATA_GATEWAY_TOKEN}")
+                elif PINATA_JWT:
+                    request.add_header("Authorization", f"Bearer {PINATA_JWT}")
+
+            with urlopen(request, timeout=15) as response:
+                while True:
+                    chunk = response.read(8192)
+                    if not chunk:
+                        break
+                    hasher.update(chunk)
+
+            return hasher.hexdigest()
+        except (HTTPError, URLError, TimeoutError) as error:
+            errors.append(f"{image_url} -> {error}")
+            continue
+
+    raise ValueError("Cannot fetch image from CID via all gateways: " + " | ".join(errors))
 
 
 def build_expected_hash_for_version(product, version_item):

@@ -46,7 +46,7 @@ export default function Product() {
 
     verifyResults.forEach((item) => {
       if (item?.ok === false) {
-        map.set(item.version, item.warning || item.reason || "Integrity check failed.");
+        map.set(item.version, item.warning || item.reason || "Cảnh báo: dữ liệu không toàn vẹn.");
       }
     });
 
@@ -93,7 +93,7 @@ export default function Product() {
         const wallet = await getConnectedWalletWithEthers();
         setCurrentWallet(wallet || "");
       } catch (walletError) {
-        console.warn("Could not get connected wallet:", walletError);
+        console.warn("Không lấy được ví đang kết nối:", walletError);
         setCurrentWallet("");
       }
     };
@@ -111,7 +111,7 @@ export default function Product() {
   };
 
   const formatDateTime = (value) => {
-    if (!value) return "N/A";
+    if (!value) return "Không có";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat("vi-VN", {
@@ -124,13 +124,13 @@ export default function Product() {
   };
 
   const shortenHash = (value) => {
-    if (!value) return "N/A";
+    if (!value) return "Không có";
     if (value.length <= 22) return value;
     return `${value.slice(0, 12)}...${value.slice(-8)}`;
   };
 
   const shortenWallet = (value) => {
-    if (!value) return "N/A";
+    if (!value) return "Không có";
     if (value.length <= 14) return value;
     return `${value.slice(0, 8)}...${value.slice(-4)}`;
   };
@@ -209,13 +209,13 @@ export default function Product() {
       <div className="product-shell">
         <div className="top-row">
           <div className="title-wrap">
-            <span className="trace-chip">Trace Detail</span>
-            <h1 className="title">{data?.product?.name || "Product Trace"}</h1>
+            <span className="trace-chip">Chi tiết truy xuất</span>
+            <h1 className="title">{data?.product?.name || "Hồ sơ truy xuất"}</h1>
             <p className="title-sub">Toàn bộ hành trình của nông sản được cập nhật theo từng phiên bản.</p>
           </div>
 
           <div className="top-actions">
-            <span className="id-tag">Product ID: #{id}</span>
+            <span className="id-tag">Mã sản phẩm: #{id}</span>
             <Link className="btn-link" to="/">
               Về trang chủ
             </Link>
@@ -243,15 +243,15 @@ export default function Product() {
             ) : integrity?.is_safe === true ? (
               <></>
             ) : (
-              <div className="integrity-info">Không thể lấy trạng thái kiểm tra integrity ở thời điểm hiện tại.</div>
+              <div className="integrity-info">Không thể lấy trạng thái kiểm tra toàn vẹn ở thời điểm hiện tại.</div>
             )}
 
             <section className="grid">
-            <article className="card">
+            <article className="card info-card">
               <div className="insight-grid">
                 <div className="insight-item">
                   <p className="insight-label">Trạng thái mới nhất</p>
-                  <p className="insight-value">{latestVersion?.status || "N/A"}</p>
+                  <p className="insight-value">{latestVersion?.status || "Không có"}</p>
                 </div>
                 <div className="insight-item">
                   <p className="insight-label">Tổng phiên bản</p>
@@ -267,27 +267,27 @@ export default function Product() {
               <div className="kv">
                 <div className="kv-item">
                   <p className="kv-label">Tên nông sản:</p>
-                  <p className="kv-value">{data.product?.name || "N/A"}</p>
+                  <p className="kv-value">{data.product?.name || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Xuất xứ:</p>
-                  <p className="kv-value">{data.product?.origin || "N/A"}</p>
+                  <p className="kv-value">{data.product?.origin || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Trạng thái hiện tại:</p>
-                  <p className="kv-value">{latestVersion?.status || "N/A"}</p>
+                  <p className="kv-value">{latestVersion?.status || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Mã lô:</p>
-                  <p className="kv-value">{data.product?.batch_code || "N/A"}</p>
+                  <p className="kv-value">{data.product?.batch_code || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Khu vực trồng:</p>
-                  <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
+                  <p className="kv-value">{data.product?.planting_area || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Nhà cung cấp:</p>
-                  <p className="kv-value">{data.product?.supplier_name || "N/A"}</p>
+                  <p className="kv-value">{data.product?.supplier_name || "Không có"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Ví sở hữu:</p>
@@ -336,16 +336,16 @@ export default function Product() {
                     return (
                     <div className={`timeline-item ${tamperReason ? "timeline-item-alert" : ""}`} key={version.version}>
                       <div className="timeline-head">
-                        <strong>Version {version.version}</strong>
+                        <strong>Phiên bản {version.version}</strong>
                         <div className="timeline-head-right">
-                          {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
+                          {tamperReason && <span className="tamper-pill">Cảnh báo toàn vẹn</span>}
                           <span className="status-pill">{version.status}</span>
                         </div>
                       </div>
 
                       <div className="timeline-meta">
                         <span>{formatDateTime(version.created_at)}</span>
-                        <span>{version.location || "N/A"}</span>
+                        <span>{version.location || "Không có"}</span>
                       </div>
 
                       <div className="timeline-body">
@@ -353,25 +353,25 @@ export default function Product() {
                           <img
                             className="preview"
                             src={toImageUrl(version.image)}
-                            alt={`Product version ${version.version}`}
+                            alt={`Ảnh phiên bản ${version.version}`}
                           />
                         )}
 
                         <div className="metric-grid">
                           <div className="metric-item">
                             <p className="metric-label">Nhiệt độ</p>
-                            <p className="metric-value">{version.temperature_c ?? "N/A"} C</p>
+                            <p className="metric-value">{version.temperature_c ?? "Không có"} C</p>
                           </div>
                           <div className="metric-item">
                             <p className="metric-label">Độ ẩm</p>
-                            <p className="metric-value">{version.humidity_percent ?? "N/A"}%</p>
+                            <p className="metric-value">{version.humidity_percent ?? "Không có"}%</p>
                           </div>
                         </div>
 
                         <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
 
-                        <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
-                        <p className="mono" title={version.tx_hash || ""}>Tx: {shortenHash(version.tx_hash)}</p>
+                        <p className="mono" title={version.hash || ""}>Mã băm: {shortenHash(version.hash)}</p>
+                        <p className="mono" title={version.tx_hash || ""}>Mã giao dịch: {shortenHash(version.tx_hash)}</p>
                         {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
                       </div>
                     </div>

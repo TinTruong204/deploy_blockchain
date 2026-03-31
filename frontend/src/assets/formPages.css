@@ -28,6 +28,19 @@
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 22px 38px rgba(39, 74, 59, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.create-card::before,
+.update-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2a875f, #ffb24a);
 }
 
 .create-page .header-row,
@@ -95,6 +108,50 @@
   color: #1f392f;
   font: inherit;
   padding: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.create-page .input:focus,
+.update-page .input:focus,
+.update-page .select:focus {
+  outline: none;
+  border-color: rgba(33, 111, 81, 0.8);
+  box-shadow: 0 0 0 4px rgba(42, 135, 95, 0.14);
+  background: #fbfffc;
+}
+
+.create-page .section-divider,
+.update-page .section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.create-page .section-divider::before,
+.create-page .section-divider::after,
+.update-page .section-divider::before,
+.update-page .section-divider::after {
+  content: "";
+  height: 1px;
+  background: rgba(47, 91, 75, 0.24);
+  flex: 1;
+}
+
+.create-page .section-divider span,
+.update-page .section-divider span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #2f5b4b;
+}
+
+.create-page .textarea,
+.update-page .textarea {
+  min-height: 110px;
+  line-height: 1.5;
+  resize: vertical;
 }
 
 .create-page .dropzone,
@@ -192,6 +249,8 @@
   gap: 10px;
   margin-top: 16px;
   flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(47, 91, 75, 0.25);
 }
 
 .create-page .btn,

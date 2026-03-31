@@ -202,6 +202,10 @@ export default function Update() {
 
           <form onSubmit={handleSubmit}>
             <div className="row">
+              <div className="section-divider full">
+                <span>Thong tin phien ban</span>
+              </div>
+
               <label className="field">
                 <span className="label">Mã nông sản:</span>
                 <input
@@ -223,6 +227,10 @@ export default function Update() {
                   ))}
                 </select>
               </label>
+
+              <div className="section-divider full">
+                <span>Dieu kien cap nhat</span>
+              </div>
 
               <label className="field">
                 <span className="label">Vị trí hiện tại:</span>
@@ -262,11 +270,12 @@ export default function Update() {
 
               <label className="field full">
                 <span className="label">Ghi chú cập nhật:</span>
-                <input
-                  className="input"
+                <textarea
+                  className="input textarea"
                   value={note}
                   onChange={(event) => setNote(event.target.value)}
-                  placeholder="VD: Đã đóng gói, chuẩn bị chuyển kho"
+                  placeholder="VD: Đã đóng gói xong, chuẩn bị chuyển sang kho trung chuyển"
+                  rows={4}
                 />
               </label>
 
@@ -325,7 +334,7 @@ export default function Update() {
                 </Link>
               )}
               <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Đang cập nhật..." : "Update Product"}
+                {isSubmitting ? "Đang cập nhật..." : "Cap nhat san pham"}
               </button>
             </div>
           </form>

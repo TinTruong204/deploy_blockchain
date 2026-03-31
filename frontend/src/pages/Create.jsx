@@ -201,6 +201,10 @@ export default function Create() {
 
           <form onSubmit={handleSubmit}>
             <div className="row">
+              <div className="section-divider full">
+                <span>Thong tin co ban</span>
+              </div>
+
               <label className="field">
                 <span className="label">Tên nông sản:</span>
                 <input
@@ -260,6 +264,10 @@ export default function Create() {
                 />
               </label>
 
+              <div className="section-divider full">
+                <span>Dieu kien bao quan va ghi chu</span>
+              </div>
+
               <label className="field">
                 <span className="label">Nhiệt độ (°C):</span>
                 <input
@@ -288,11 +296,12 @@ export default function Create() {
 
               <label className="field full">
                 <span className="label">Ghi chú quản lý:</span>
-                <input
-                  className="input"
+                <textarea
+                  className="input textarea"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="VD: Thu hoạch đợt đầu, chất lượng loại 1"
+                  placeholder="VD: Cây phát triển tốt, dự kiến thu hoạch trong 2 tuần tới"
+                  rows={4}
                 />
               </label>
 
@@ -342,7 +351,7 @@ export default function Create() {
               </Link>
               {!wallet && (
                 <button className="btn btn-ghost" type="button" onClick={connectWallet} disabled={isConnecting}>
-                  {isConnecting ? "Đang kết nối..." : "Connect Wallet"}
+                  {isConnecting ? "Đang kết nối..." : "Ket noi vi"}
                 </button>
               )}
               <button className="btn btn-primary" type="submit" disabled={isSubmitting}>

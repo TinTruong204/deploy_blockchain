@@ -184,11 +184,11 @@ export default function Home() {
   return (
     <div className="home-page">
       <div className="home-shell">
-        <span className="brand-chip">Farm to Table Visibility</span>
+        <span className="brand-chip">Minh bạch từ nông trại đến bàn ăn</span>
 
         <section className="hero">
           <article className="panel">
-            <h1>Agri Trace Platform</h1>
+            <h1>Nền tảng truy xuất nông sản</h1>
             <p>
               Theo dõi toàn bộ vòng đời nông sản từ thu hoạch, vận chuyển đến điểm bán với dữ liệu minh bạch trên blockchain.
             </p>

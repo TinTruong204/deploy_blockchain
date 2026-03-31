@@ -78,8 +78,52 @@ def product_exists_onchain(product_id):
 
 def get_product_onchain(product_id):
     contract, _, _ = get_blockchain_ctx()
-    # ABI getProduct returns: (hash, owner, metadata, timestamp)
+    # ABI getProduct returns 4 fields with unnamed outputs in abi.json.
     return contract.functions.getProduct(str(product_id)).call()
+
+
+def is_sha256_hex(value):
+    if not value:
+        return False
+    text = str(value).strip().lower()
+    if len(text) != 64:
+        return False
+    return all(ch in "0123456789abcdef" for ch in text)
+
+
+def parse_onchain_product_state(raw_product):
+    if not raw_product or len(raw_product) < 4:
+        return {
+            "hash": "",
+            "owner": "",
+            "metadata": "",
+            "timestamp": None,
+        }
+
+    first = str(raw_product[0] or "").strip()
+    owner = raw_product[1]
+    third = str(raw_product[2] or "").strip()
+    timestamp = raw_product[3]
+
+    # Some contract versions return (hash, owner, metadata, timestamp),
+    # others return (uuid, owner, hash, timestamp). Detect hash by shape.
+    if is_sha256_hex(first) and not is_sha256_hex(third):
+        hash_value = first
+        metadata = third
+    elif is_sha256_hex(third) and not is_sha256_hex(first):
+        hash_value = third
+        metadata = first
+    else:
+        # Fallback: prefer third for compatibility with newer tuple layouts.
+        hash_value = third or first
+        metadata = first if hash_value == third else third
+
+    return {
+        "hash": str(hash_value or "").strip().lower(),
+        "owner": owner,
+        "metadata": metadata,
+        "timestamp": timestamp,
+    }
 
 
 def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_product_id, expected_hash):
@@ -344,8 +388,10 @@ def verify_product_versions(product):
         chain_state["exists"] = chain_exists
 
         if chain_exists:
-            chain_hash, chain_owner, _, _ = get_product_onchain(product.id)
-            chain_hash_norm = str(chain_hash or "").strip().lower()
+            chain_raw = get_product_onchain(product.id)
+            chain_parsed = parse_onchain_product_state(chain_raw)
+            chain_hash_norm = chain_parsed["hash"]
+            chain_owner = chain_parsed["owner"]
             chain_owner_norm = normalize_address(chain_owner)
             latest_db_hash = str((latest_db_version.hash if latest_db_version else "") or "").strip().lower()
 
@@ -564,10 +610,10 @@ def create_product(request):
         if not product_exists_onchain(product.id):
             raise ValueError("Sản phẩm chưa tồn tại trên blockchain sau addProduct")
 
-        onchain_hash, onchain_owner, _, _ = get_product_onchain(product.id)
-        if str(onchain_hash or "").strip().lower() != hash_value.lower():
+        onchain_state = parse_onchain_product_state(get_product_onchain(product.id))
+        if onchain_state["hash"] != hash_value.lower():
             raise ValueError("Hash sản phẩm trên blockchain không khớp hash kỳ vọng")
-        if normalize_address(onchain_owner) != wallet:
+        if normalize_address(onchain_state["owner"]) != wallet:
             raise ValueError("Owner sản phẩm trên blockchain không khớp ví đã kết nối")
     except Exception as error:
         product.delete()
@@ -667,10 +713,10 @@ def update_product(request):
             expected_hash=hash_value,
         )
 
-        onchain_hash, onchain_owner, _, _ = get_product_onchain(product.id)
-        if str(onchain_hash or "").strip().lower() != hash_value.lower():
+        onchain_state = parse_onchain_product_state(get_product_onchain(product.id))
+        if onchain_state["hash"] != hash_value.lower():
             raise ValueError("Hash sản phẩm trên blockchain không khớp hash kỳ vọng")
-        if normalize_address(onchain_owner) != wallet:
+        if normalize_address(onchain_state["owner"]) != wallet:
             raise ValueError("Owner sản phẩm trên blockchain không khớp ví đã kết nối")
     except Exception as error:
         return Response({"detail": f"Xác thực giao dịch blockchain thất bại: {error}"}, status=503)

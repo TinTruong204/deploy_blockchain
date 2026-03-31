@@ -3,7 +3,7 @@ import productTraceAbi from "../contracts/productTraceAbi.json";
 
 const WALLET_STORAGE_KEY = "producttrace_wallet";
 const PRODUCT_TRACE_CONTRACT_ADDRESS =
-  import.meta.env.VITE_PRODUCT_TRACE_CONTRACT_ADDRESS || "0x3f610734fFf19Aa231fd3B0C8C83Eed61B2df386";
+  import.meta.env.VITE_PRODUCT_TRACE_CONTRACT_ADDRESS || "0xD4079cF3719Ae0DAE71598EFFA046A841ED3fED9";
 
 const HASH_FIELD_ORDER = [
   "action",

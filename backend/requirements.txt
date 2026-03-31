@@ -4,4 +4,3 @@ web3
 pillow
 qrcode
 gunicorn
-django-cors-headers

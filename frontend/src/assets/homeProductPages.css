@@ -107,12 +107,20 @@
 
 .home-page .status-box {
   margin-top: 16px;
-  padding: 14px;
-  border-radius: 14px;
-  background: #f6fbf7;
-  border: 1px solid #d6e9de;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(246, 251, 247, 0.95), rgba(234, 246, 240, 0.98));
+  border: 1.5px solid #d6e9de;
   color: #2f594b;
   font-size: 14px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
+  box-shadow: 0 2px 8px rgba(34, 104, 74, 0.08);
+  transition: all 0.3s ease;
 }
 
 .home-page .wallet-card {

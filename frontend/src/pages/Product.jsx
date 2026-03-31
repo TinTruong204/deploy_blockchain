@@ -371,7 +371,16 @@ export default function Product() {
                         <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
 
                         <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
-                        <p className="mono" title={version.tx_hash || ""}>Tx: {shortenHash(version.tx_hash)}</p>
+                        <a 
+                          className="mono" 
+                          href={version.tx_hash ? `https://flare-explorer.flare.network/tx/${version.tx_hash}` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={version.tx_hash || ""}
+                          style={{ textDecoration: "none", color: "inherit", cursor: version.tx_hash ? "pointer" : "default" }}
+                        >
+                          Tx: {shortenHash(version.tx_hash)}
+                        </a>
                         {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
                       </div>
                     </div>

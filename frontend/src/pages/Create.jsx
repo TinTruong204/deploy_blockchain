@@ -202,7 +202,7 @@ export default function Create() {
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="section-divider full">
-                <span>Thong tin co ban</span>
+                <span>Thông tin cơ bản</span>
               </div>
 
               <label className="field">
@@ -265,7 +265,7 @@ export default function Create() {
               </label>
 
               <div className="section-divider full">
-                <span>Dieu kien bao quan va ghi chu</span>
+                <span>Điều kiện môi trường và ghi chú</span>
               </div>
 
               <label className="field">

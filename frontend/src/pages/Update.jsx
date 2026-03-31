@@ -203,7 +203,7 @@ export default function Update() {
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="section-divider full">
-                <span>Thong tin phien ban</span>
+                <span>Thông tin phiên bản</span>
               </div>
 
               <label className="field">
@@ -229,7 +229,7 @@ export default function Update() {
               </label>
 
               <div className="section-divider full">
-                <span>Dieu kien cap nhat</span>
+                <span>Cập nhật điều kiện</span>
               </div>
 
               <label className="field">
@@ -334,7 +334,7 @@ export default function Update() {
                 </Link>
               )}
               <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Đang cập nhật..." : "Cap nhat san pham"}
+                {isSubmitting ? "Đang cập nhật..." : "Cập nhật sản phẩm"}
               </button>
             </div>
           </form>

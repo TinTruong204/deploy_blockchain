@@ -18,7 +18,6 @@ export default function Create() {
   const [origin, setOrigin] = useState("");
   const [batchCode, setBatchCode] = useState("");
   const [plantingArea, setPlantingArea] = useState("");
-  const [quantityKg, setQuantityKg] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [location, setLocation] = useState("");
   const [temperatureC, setTemperatureC] = useState("");
@@ -121,7 +120,6 @@ export default function Create() {
     const productOrigin = origin.trim();
     const normalizedBatchCode = batchCode.trim();
     const normalizedPlantingArea = plantingArea.trim();
-    const normalizedQuantityKg = quantityKg.trim();
     const normalizedSupplierName = supplierName.trim();
     const normalizedLocation = location.trim();
     const normalizedTemperatureC = temperatureC.trim();
@@ -142,7 +140,6 @@ export default function Create() {
         origin: productOrigin,
         batch_code: normalizedBatchCode,
         planting_area: normalizedPlantingArea,
-        quantity_kg: normalizedQuantityKg,
         supplier_name: normalizedSupplierName,
         owner_wallet: wallet,
         version: 1,
@@ -160,7 +157,6 @@ export default function Create() {
       formData.append("origin", productOrigin);
       formData.append("batch_code", normalizedBatchCode);
       formData.append("planting_area", normalizedPlantingArea);
-      formData.append("quantity_kg", normalizedQuantityKg);
       formData.append("supplier_name", normalizedSupplierName);
       formData.append("location", normalizedLocation);
       formData.append("temperature_c", normalizedTemperatureC);
@@ -244,21 +240,6 @@ export default function Create() {
                   placeholder="VD: Khu A - Đồi 3"
                 />
               </label>
-
-
-              <label className="field">
-                <span className="label">Sản lượng (kg):</span>
-                <input
-                  className="input"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={quantityKg}
-                  onChange={(e) => setQuantityKg(e.target.value)}
-                  placeholder="VD: 1200"
-                />
-              </label>
-
               <label className="field">
                 <span className="label">Nhà cung cấp:</span>
                 <input

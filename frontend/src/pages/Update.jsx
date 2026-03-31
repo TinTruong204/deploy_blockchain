@@ -145,7 +145,6 @@ export default function Update() {
         origin: product?.origin || "",
         batch_code: product?.batch_code || "",
         planting_area: product?.planting_area || "",
-        quantity_kg: product?.quantity_kg ?? "",
         supplier_name: product?.supplier_name || "",
         owner_wallet: product?.owner_wallet || wallet,
         version: nextVersion,

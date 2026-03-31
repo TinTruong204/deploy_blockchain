@@ -8,7 +8,6 @@ class Product(models.Model):
     origin = models.CharField(max_length=255)
     batch_code = models.CharField(max_length=100, blank=True, default="")
     planting_area = models.CharField(max_length=255, blank=True, default="")
-    quantity_kg = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     supplier_name = models.CharField(max_length=255, blank=True, default="")
     owner_wallet = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)

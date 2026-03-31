@@ -33,7 +33,6 @@ HASH_FIELD_ORDER = [
     "origin",
     "batch_code",
     "planting_area",
-    "quantity_kg",
     "supplier_name",
     "owner_wallet",
     "version",
@@ -270,7 +269,6 @@ def build_expected_hash_for_version(product, version_item):
         "origin": product.origin,
         "batch_code": product.batch_code,
         "planting_area": product.planting_area,
-        "quantity_kg": product.quantity_kg,
         "supplier_name": product.supplier_name,
         "owner_wallet": product.owner_wallet,
         "version": version_item.version,
@@ -449,7 +447,7 @@ def normalize_hash_field(field, value):
     if field == "id":
         return text.lower()
 
-    if field in {"quantity_kg", "temperature_c", "humidity_percent"}:
+    if field in {"temperature_c", "humidity_percent"}:
         if value is None:
             return ""
         if isinstance(value, Decimal):
@@ -543,14 +541,10 @@ def create_product(request):
         return Response({"detail": "id phải là UUID hợp lệ"}, status=400)
 
     try:
-        quantity_kg = parse_optional_decimal(request.data.get("quantity_kg"), "quantity_kg")
         temperature_c = parse_optional_decimal(request.data.get("temperature_c"), "temperature_c")
         humidity_percent = parse_optional_decimal(request.data.get("humidity_percent"), "humidity_percent")
     except ValueError as error:
         return Response({"detail": str(error)}, status=400)
-
-    if quantity_kg is not None and quantity_kg < 0:
-        return Response({"detail": "quantity_kg phải lớn hơn hoặc bằng 0"}, status=400)
 
     if humidity_percent is not None and (humidity_percent < 0 or humidity_percent > 100):
         return Response({"detail": "humidity_percent phải trong khoảng từ 0 đến 100"}, status=400)
@@ -572,7 +566,6 @@ def create_product(request):
         origin=origin,
         batch_code=batch_code,
         planting_area=planting_area,
-        quantity_kg=quantity_kg,
         supplier_name=supplier_name,
         owner_wallet=wallet,
     )
@@ -584,7 +577,6 @@ def create_product(request):
             "origin": origin,
             "batch_code": batch_code,
             "planting_area": planting_area,
-            "quantity_kg": quantity_kg,
             "supplier_name": supplier_name,
             "owner_wallet": wallet,
             "version": 1,
@@ -681,7 +673,6 @@ def update_product(request):
             "origin": product.origin,
             "batch_code": product.batch_code,
             "planting_area": product.planting_area,
-            "quantity_kg": product.quantity_kg,
             "supplier_name": product.supplier_name,
             "owner_wallet": product.owner_wallet,
             "version": new_version,
@@ -748,7 +739,6 @@ def get_product(request, id):
             "origin": product.origin,
             "batch_code": product.batch_code,
             "planting_area": product.planting_area,
-            "quantity_kg": product.quantity_kg,
             "supplier_name": product.supplier_name,
             "owner_wallet": product.owner_wallet,
             "created_at": product.created_at,

@@ -12,7 +12,6 @@ const HASH_FIELD_ORDER = [
   "origin",
   "batch_code",
   "planting_area",
-  "quantity_kg",
   "supplier_name",
   "owner_wallet",
   "version",
@@ -93,7 +92,7 @@ const normalizeHashField = (field, value) => {
     return text.toLowerCase();
   }
 
-  if (field === "quantity_kg" || field === "temperature_c" || field === "humidity_percent") {
+  if (field === "temperature_c" || field === "humidity_percent") {
     return normalizeDecimalString(text);
   }
 

@@ -5,3 +5,4 @@ pillow
 qrcode
 gunicorn
 django-cors-headers
+requests

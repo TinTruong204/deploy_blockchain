@@ -1,11 +1,10 @@
 import hashlib
 import uuid
 from decimal import Decimal, InvalidOperation
-from urllib.error import HTTPError, URLError
 from urllib.parse import quote
-from urllib.request import Request, urlopen
 
 import os
+import requests
 
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -239,23 +238,23 @@ def build_image_sha256_from_cid(image_cid):
     for image_url in image_urls:
         hasher = hashlib.sha256()
         try:
-            request = Request(image_url)
+            headers = {}
+            params = {}
             if image_url.startswith("https://gateway.pinata.cloud/"):
                 if PINATA_GATEWAY_TOKEN:
-                    separator = "&" if "?" in image_url else "?"
-                    request = Request(f"{image_url}{separator}pinataGatewayToken={PINATA_GATEWAY_TOKEN}")
+                    params["pinataGatewayToken"] = PINATA_GATEWAY_TOKEN
                 elif PINATA_JWT:
-                    request.add_header("Authorization", f"Bearer {PINATA_JWT}")
+                    headers["Authorization"] = f"Bearer {PINATA_JWT}"
 
-            with urlopen(request, timeout=45) as response:
-                while True:
-                    chunk = response.read(8192)
+            with requests.get(image_url, headers=headers, params=params, timeout=45, stream=True) as response:
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=8192):
                     if not chunk:
-                        break
+                        continue
                     hasher.update(chunk)
 
             return hasher.hexdigest()
-        except (HTTPError, URLError, TimeoutError) as error:
+        except requests.RequestException as error:
             errors.append(f"{image_url} -> {error}")
             continue
 

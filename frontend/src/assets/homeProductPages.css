@@ -597,6 +597,11 @@
   padding: 12px;
   font-size: 14px;
   border: 1px solid;
+  width: fit-content;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .product-page .integrity-alert {

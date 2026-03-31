@@ -210,7 +210,7 @@ export default function Product() {
         <div className="top-row">
           <div className="title-wrap">
             <span className="trace-chip">Thông tin truy xuất chi tiết</span>
-            <h1 className="title">{data?.product?.name || "Truy xuất nông sản"}</h1>
+            <h1 className="title">{data?.product?.name || "Nền tảng truy xuất nông sản"}</h1>
             <p className="title-sub">Toàn bộ hành trình của nông sản được cập nhật theo từng phiên bản.</p>
           </div>
 
@@ -241,7 +241,7 @@ export default function Product() {
                 Cảnh báo: phát hiện {violatedCount} phiên bản có dấu hiệu bị sửa dữ liệu hoặc không khớp blockchain.
               </div>
             ) : integrity?.is_safe === true ? (
-              <div className="integrity-ok">Dữ liệu tất cả phiên bản khớp với blockchain.</div>
+              <></>
             ) : (
               <div className="integrity-info">Không thể lấy trạng thái kiểm tra integrity ở thời điểm hiện tại.</div>
             )}
@@ -284,10 +284,6 @@ export default function Product() {
                 <div className="kv-item">
                   <p className="kv-label">Khu vực trồng:</p>
                   <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Sản lượng (kg):</p>
-                  <p className="kv-value">{data.product?.quantity_kg || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Nhà cung cấp:</p>

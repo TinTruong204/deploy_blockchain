@@ -1,6 +1,5 @@
 import hashlib
 import uuid
-from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -72,6 +71,17 @@ def normalize_address(address):
     return address.strip().lower()
 
 
+def product_exists_onchain(product_id):
+    contract, _, _ = get_blockchain_ctx()
+    return bool(contract.functions.productExistsCheck(str(product_id)).call())
+
+
+def get_product_onchain(product_id):
+    contract, _, _ = get_blockchain_ctx()
+    # ABI getProduct returns: (hash, owner, metadata, timestamp)
+    return contract.functions.getProduct(str(product_id)).call()
+
+
 def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_product_id, expected_hash):
     contract, contract_address, w3 = get_blockchain_ctx()
 
@@ -83,22 +93,22 @@ def verify_contract_tx(tx_hash, expected_sender, expected_fn_name, expected_prod
     tx_to_normalized = normalize_address(tx_to) if tx_to else ""
 
     if receipt.status != 1:
-        raise ValueError("Transaction failed on-chain")
+        raise ValueError("Giao dịch thất bại trên blockchain")
     if tx_sender != normalize_address(expected_sender):
-        raise ValueError("Transaction sender does not match connected wallet")
+        raise ValueError("Ví gửi giao dịch không khớp với ví đã kết nối")
     if tx_to_normalized != normalize_address(contract_address):
-        raise ValueError("Transaction target contract does not match ProductTrace")
+        raise ValueError("Địa chỉ contract đích không khớp với ProductTrace")
 
     fn, fn_args = contract.decode_function_input(tx.get("input", "0x"))
     if fn.fn_name != expected_fn_name:
-        raise ValueError(f"Unexpected contract function: {fn.fn_name}")
+        raise ValueError(f"Hàm contract không đúng: {fn.fn_name}")
 
     onchain_uuid = fn_args.get("_uuid")
     onchain_hash = fn_args.get("_hash") or fn_args.get("_newHash")
     if str(onchain_uuid).strip().lower() != str(expected_product_id).strip().lower():
-        raise ValueError("Product ID in transaction does not match request")
+        raise ValueError("Mã sản phẩm trong giao dịch không khớp với yêu cầu")
     if str(onchain_hash).strip().lower() != str(expected_hash).strip().lower():
-        raise ValueError("Product hash in transaction does not match request")
+        raise ValueError("Hash sản phẩm trong giao dịch không khớp với yêu cầu")
 
     return receipt
 
@@ -110,7 +120,7 @@ def verify_product_version_onchain(product_id, version_item):
     if not tx_hash:
         return {
             "ok": False,
-            "reason": "Missing tx_hash",
+            "reason": "Thiếu tx_hash",
         }
 
     try:
@@ -119,20 +129,20 @@ def verify_product_version_onchain(product_id, version_item):
     except Exception as error:
         return {
             "ok": False,
-            "reason": f"Cannot load transaction: {error}",
+            "reason": f"Không thể tải giao dịch: {error}",
         }
 
     if receipt.status != 1:
         return {
             "ok": False,
-            "reason": "On-chain transaction failed",
+            "reason": "Giao dịch trên blockchain thất bại",
         }
 
     tx_to = tx.get("to")
     if normalize_address(tx_to) != normalize_address(contract_address):
         return {
             "ok": False,
-            "reason": "Transaction target is not ProductTrace contract",
+            "reason": "Địa chỉ nhận giao dịch không phải contract ProductTrace",
         }
 
     try:
@@ -140,14 +150,14 @@ def verify_product_version_onchain(product_id, version_item):
     except Exception as error:
         return {
             "ok": False,
-            "reason": f"Cannot decode transaction input: {error}",
+            "reason": f"Không thể giải mã input của giao dịch: {error}",
         }
 
     expected_fn_name = "addProduct" if version_item.version == 1 else "updateProduct"
     if fn.fn_name != expected_fn_name:
         return {
             "ok": False,
-            "reason": f"Unexpected function {fn.fn_name}, expected {expected_fn_name}",
+            "reason": f"Hàm {fn.fn_name} không đúng, mong đợi {expected_fn_name}",
         }
 
     onchain_uuid = str((fn_args.get("_uuid") or "")).strip().lower()
@@ -155,20 +165,20 @@ def verify_product_version_onchain(product_id, version_item):
     if onchain_uuid != expected_uuid:
         return {
             "ok": False,
-            "reason": "Product id mismatch between data and blockchain",
+            "reason": "Mã sản phẩm giữa dữ liệu và blockchain không khớp",
         }
 
     onchain_hash = str((fn_args.get("_hash") or fn_args.get("_newHash") or "")).strip().lower()
     if not onchain_hash:
         return {
             "ok": False,
-            "reason": "Missing on-chain hash in transaction input",
+            "reason": "Thiếu hash on-chain trong input giao dịch",
             "onchain_hash": "",
         }
 
     return {
         "ok": True,
-        "reason": "Verified",
+        "reason": "Đã xác minh",
         "tx_from": tx.get("from"),
         "tx_hash": tx_hash,
         "onchain_hash": onchain_hash,
@@ -177,11 +187,10 @@ def verify_product_version_onchain(product_id, version_item):
 
 def build_image_sha256_from_cid(image_cid):
     if not image_cid:
-        raise ValueError("Missing image CID")
+        raise ValueError("Thiếu CID ảnh")
 
     image_urls = [f"{prefix}{image_cid}" for prefix in IPFS_GATEWAY_PREFIXES]
     errors = []
-    hasher = hashlib.sha256()
 
     for image_url in image_urls:
         hasher = hashlib.sha256()
@@ -206,7 +215,7 @@ def build_image_sha256_from_cid(image_cid):
             errors.append(f"{image_url} -> {error}")
             continue
 
-    raise ValueError("Cannot fetch image from CID via all gateways: " + " | ".join(errors))
+    raise ValueError("Không thể tải ảnh từ CID qua tất cả gateway: " + " | ".join(errors))
 
 
 def build_expected_hash_for_version(product, version_item):
@@ -261,7 +270,7 @@ def verify_product_versions(product):
         except Exception as error:
             verify_result = {
                 "ok": False,
-                "reason": f"Cannot recompute hash from current DB data: {error}",
+                "reason": f"Không thể tính lại hash từ dữ liệu DB hiện tại: {error}",
                 "onchain_hash": verify_result.get("onchain_hash"),
                 "data_hash": stored_hash,
             }
@@ -273,7 +282,7 @@ def verify_product_versions(product):
             if not onchain_hash:
                 verify_result = {
                     "ok": False,
-                    "reason": "Missing on-chain hash in transaction input",
+                    "reason": "Thiếu hash on-chain trong input giao dịch",
                     "onchain_hash": onchain_hash,
                     "data_hash": stored_hash,
                     "recalculated_hash": recalculated_hash_lower,
@@ -281,7 +290,7 @@ def verify_product_versions(product):
             elif onchain_hash != recalculated_hash_lower:
                 verify_result = {
                     "ok": False,
-                    "reason": "Recalculated hash from DB data does not match blockchain",
+                    "reason": "Hash tính lại từ DB không khớp với blockchain",
                     "onchain_hash": onchain_hash,
                     "data_hash": stored_hash,
                     "recalculated_hash": recalculated_hash_lower,
@@ -289,7 +298,7 @@ def verify_product_versions(product):
             elif stored_hash != recalculated_hash_lower:
                 verify_result = {
                     "ok": False,
-                    "reason": "Stored DB hash does not match recalculated hash",
+                    "reason": "Hash lưu trong DB không khớp với hash tính lại",
                     "onchain_hash": onchain_hash,
                     "data_hash": stored_hash,
                     "recalculated_hash": recalculated_hash_lower,
@@ -297,7 +306,7 @@ def verify_product_versions(product):
             else:
                 verify_result = {
                     "ok": True,
-                    "reason": "Verified",
+                    "reason": "Đã xác minh",
                     "onchain_hash": onchain_hash,
                     "data_hash": stored_hash,
                     "recalculated_hash": recalculated_hash_lower,
@@ -317,34 +326,60 @@ def verify_product_versions(product):
         )
 
     violated_versions = [item["version"] for item in results if not item["ok"]]
+
+    latest_db_version = versions.last() if versions.exists() else None
+    chain_state = {
+        "checked": False,
+        "exists": False,
+        "hash": "",
+        "owner": "",
+        "matches_latest_db_hash": None,
+        "matches_product_owner": None,
+        "reason": None,
+    }
+
+    try:
+        chain_exists = product_exists_onchain(product.id)
+        chain_state["checked"] = True
+        chain_state["exists"] = chain_exists
+
+        if chain_exists:
+            chain_hash, chain_owner, _, _ = get_product_onchain(product.id)
+            chain_hash_norm = str(chain_hash or "").strip().lower()
+            chain_owner_norm = normalize_address(chain_owner)
+            latest_db_hash = str((latest_db_version.hash if latest_db_version else "") or "").strip().lower()
+
+            chain_state["hash"] = chain_hash_norm
+            chain_state["owner"] = chain_owner
+            chain_state["matches_latest_db_hash"] = bool(latest_db_hash) and (chain_hash_norm == latest_db_hash)
+            chain_state["matches_product_owner"] = chain_owner_norm == normalize_address(product.owner_wallet)
+
+            if latest_db_version and chain_hash_norm and chain_hash_norm != latest_db_hash:
+                chain_state["reason"] = "Hash mới nhất trong DB không khớp hash sản phẩm hiện tại trên blockchain"
+            elif chain_owner_norm != normalize_address(product.owner_wallet):
+                chain_state["reason"] = "Ví owner trong DB không khớp owner hiện tại trên blockchain"
+        else:
+            chain_state["reason"] = "Sản phẩm không tồn tại trên blockchain"
+    except Exception as error:
+        chain_state["checked"] = False
+        chain_state["reason"] = f"Không thể truy vấn trạng thái sản phẩm trên blockchain: {error}"
+
+    if chain_state["checked"]:
+        if not chain_state["exists"]:
+            violated_versions.append("chain_state")
+        elif chain_state.get("matches_latest_db_hash") is False:
+            violated_versions.append("chain_hash_mismatch")
+        elif chain_state.get("matches_product_owner") is False:
+            violated_versions.append("chain_owner_mismatch")
+
+    violated_versions = list(dict.fromkeys(violated_versions))
     return {
         "total_versions": len(results),
         "violated_versions": violated_versions,
         "is_safe": len(violated_versions) == 0,
+        "chain_state": chain_state,
         "results": results,
     }
-
-
-def build_hash(name, origin, status):
-    payload = {
-        "action": "LEGACY",
-        "id": "",
-        "name": name,
-        "origin": origin,
-        "batch_code": "",
-        "planting_area": "",
-        "quantity_kg": "",
-        "supplier_name": "",
-        "owner_wallet": "",
-        "version": "",
-        "status": status,
-        "location": "",
-        "temperature_c": "",
-        "humidity_percent": "",
-        "note": "",
-        "image_sha256": "",
-    }
-    return build_business_hash(payload)
 
 
 def decimal_to_hash_string(value):
@@ -412,24 +447,14 @@ def parse_optional_decimal(raw_value, field_name):
     try:
         return Decimal(value)
     except (InvalidOperation, ValueError):
-        raise ValueError(f"{field_name} must be a valid number")
-
-
-def parse_optional_date(raw_value, field_name):
-    value = (raw_value or "").strip()
-    if not value:
-        return None
-    try:
-        return date.fromisoformat(value)
-    except ValueError:
-        raise ValueError(f"{field_name} must be in YYYY-MM-DD format")
+        raise ValueError(f"{field_name} phải là số hợp lệ")
 
 
 def upload_image_and_get_cid(image):
     pinata_response = upload_to_pinata(image)
     image_cid = pinata_response.get("IpfsHash")
     if not image_cid:
-        raise ValueError(f"Pinata upload failed: {pinata_response}")
+        raise ValueError(f"Tải ảnh lên Pinata thất bại: {pinata_response}")
     return image_cid
 
 
@@ -463,14 +488,14 @@ def create_product(request):
     image = request.FILES.get("image")
 
     if not product_id or not name or not origin or not wallet or not tx_hash:
-        return Response({"detail": "id, name, origin, wallet, and tx_hash are required"}, status=400)
+        return Response({"detail": "Bắt buộc có id, name, origin, wallet và tx_hash"}, status=400)
     if not image:
-        return Response({"detail": "image is required"}, status=400)
+        return Response({"detail": "Bắt buộc có ảnh"}, status=400)
 
     try:
         uuid.UUID(product_id)
     except ValueError:
-        return Response({"detail": "id must be a valid UUID"}, status=400)
+        return Response({"detail": "id phải là UUID hợp lệ"}, status=400)
 
     try:
         quantity_kg = parse_optional_decimal(request.data.get("quantity_kg"), "quantity_kg")
@@ -480,20 +505,20 @@ def create_product(request):
         return Response({"detail": str(error)}, status=400)
 
     if quantity_kg is not None and quantity_kg < 0:
-        return Response({"detail": "quantity_kg must be >= 0"}, status=400)
+        return Response({"detail": "quantity_kg phải lớn hơn hoặc bằng 0"}, status=400)
 
     if humidity_percent is not None and (humidity_percent < 0 or humidity_percent > 100):
-        return Response({"detail": "humidity_percent must be between 0 and 100"}, status=400)
+        return Response({"detail": "humidity_percent phải trong khoảng từ 0 đến 100"}, status=400)
 
     if Product.objects.filter(id=product_id).exists():
-        return Response({"detail": "Product already exists"}, status=409)
+        return Response({"detail": "Sản phẩm đã tồn tại"}, status=409)
 
     image_sha256 = build_file_sha256(image)
 
     try:
         image_cid = upload_image_and_get_cid(image)
     except Exception as error:
-        return Response({"detail": f"Image upload to Pinata failed: {error}"}, status=400)
+        return Response({"detail": f"Tải ảnh lên Pinata thất bại: {error}"}, status=400)
 
     status = "PLANTED"
     product = Product.objects.create(
@@ -535,9 +560,18 @@ def create_product(request):
             expected_product_id=str(product.id),
             expected_hash=hash_value,
         )
+
+        if not product_exists_onchain(product.id):
+            raise ValueError("Sản phẩm chưa tồn tại trên blockchain sau addProduct")
+
+        onchain_hash, onchain_owner, _, _ = get_product_onchain(product.id)
+        if str(onchain_hash or "").strip().lower() != hash_value.lower():
+            raise ValueError("Hash sản phẩm trên blockchain không khớp hash kỳ vọng")
+        if normalize_address(onchain_owner) != wallet:
+            raise ValueError("Owner sản phẩm trên blockchain không khớp ví đã kết nối")
     except Exception as error:
         product.delete()
-        return Response({"detail": f"Blockchain transaction failed: {error}"}, status=503)
+        return Response({"detail": f"Xác thực giao dịch blockchain thất bại: {error}"}, status=503)
 
     ProductVersion.objects.create(
         product=product,
@@ -566,13 +600,13 @@ def update_product(request):
     image = request.FILES.get("image")
 
     if not product_id:
-        return Response({"detail": "id is required"}, status=400)
+        return Response({"detail": "Bắt buộc có id"}, status=400)
     if not status:
-        return Response({"detail": "status is required"}, status=400)
+        return Response({"detail": "Bắt buộc có status"}, status=400)
     if not wallet or not tx_hash:
-        return Response({"detail": "wallet and tx_hash are required"}, status=400)
+        return Response({"detail": "Bắt buộc có wallet và tx_hash"}, status=400)
     if not image:
-        return Response({"detail": "image is required"}, status=400)
+        return Response({"detail": "Bắt buộc có ảnh"}, status=400)
 
     try:
         temperature_c = parse_optional_decimal(request.data.get("temperature_c"), "temperature_c")
@@ -581,7 +615,7 @@ def update_product(request):
         return Response({"detail": str(error)}, status=400)
 
     if humidity_percent is not None and (humidity_percent < 0 or humidity_percent > 100):
-        return Response({"detail": "humidity_percent must be between 0 and 100"}, status=400)
+        return Response({"detail": "humidity_percent phải trong khoảng từ 0 đến 100"}, status=400)
 
     product = get_object_or_404(Product, id=product_id)
 
@@ -590,7 +624,7 @@ def update_product(request):
     try:
         image_cid = upload_image_and_get_cid(image)
     except Exception as error:
-        return Response({"detail": f"Image upload to Pinata failed: {error}"}, status=400)
+        return Response({"detail": f"Tải ảnh lên Pinata thất bại: {error}"}, status=400)
 
     latest = ProductVersion.objects.filter(product=product).order_by("-version").first()
     new_version = latest.version + 1 if latest else 1
@@ -616,7 +650,13 @@ def update_product(request):
     )
 
     if normalize_address(product.owner_wallet) != wallet:
-        return Response({"detail": "Only product owner can update this product"}, status=403)
+        return Response({"detail": "Chỉ owner sản phẩm mới được cập nhật sản phẩm này"}, status=403)
+
+    try:
+        if not product_exists_onchain(product.id):
+            return Response({"detail": "Sản phẩm không tồn tại trên blockchain"}, status=409)
+    except Exception as error:
+        return Response({"detail": f"Không thể kiểm tra sự tồn tại on-chain của sản phẩm: {error}"}, status=503)
 
     try:
         verify_contract_tx(
@@ -626,8 +666,14 @@ def update_product(request):
             expected_product_id=str(product.id),
             expected_hash=hash_value,
         )
+
+        onchain_hash, onchain_owner, _, _ = get_product_onchain(product.id)
+        if str(onchain_hash or "").strip().lower() != hash_value.lower():
+            raise ValueError("Hash sản phẩm trên blockchain không khớp hash kỳ vọng")
+        if normalize_address(onchain_owner) != wallet:
+            raise ValueError("Owner sản phẩm trên blockchain không khớp ví đã kết nối")
     except Exception as error:
-        return Response({"detail": f"Blockchain transaction failed: {error}"}, status=503)
+        return Response({"detail": f"Xác thực giao dịch blockchain thất bại: {error}"}, status=503)
 
     ProductVersion.objects.create(
         product=product,
@@ -686,7 +732,7 @@ def get_product(request, id):
 def get_products_by_wallet(request):
     wallet = (request.GET.get("wallet") or "").strip()
     if not wallet:
-        return Response({"detail": "wallet is required"}, status=400)
+        return Response({"detail": "Bắt buộc có wallet"}, status=400)
 
     search = (request.GET.get("search") or "").strip()
     status_filter = (request.GET.get("status") or "").strip().upper()
@@ -694,17 +740,17 @@ def get_products_by_wallet(request):
     try:
         page = int(request.GET.get("page") or 1)
     except ValueError:
-        return Response({"detail": "page must be an integer"}, status=400)
+        return Response({"detail": "page phải là số nguyên"}, status=400)
 
     try:
         page_size = int(request.GET.get("page_size") or 9)
     except ValueError:
-        return Response({"detail": "page_size must be an integer"}, status=400)
+        return Response({"detail": "page_size phải là số nguyên"}, status=400)
 
     if page < 1:
-        return Response({"detail": "page must be >= 1"}, status=400)
+        return Response({"detail": "page phải lớn hơn hoặc bằng 1"}, status=400)
     if page_size < 1 or page_size > 50:
-        return Response({"detail": "page_size must be between 1 and 50"}, status=400)
+        return Response({"detail": "page_size phải trong khoảng từ 1 đến 50"}, status=400)
 
     products = Product.objects.filter(owner_wallet__iexact=wallet)
 

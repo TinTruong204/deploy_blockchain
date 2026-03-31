@@ -172,24 +172,6 @@
                 "type": "string"
             },
             {
-                "internalType": "address",
-                "name": "_newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "_uuid",
-                "type": "string"
-            },
-            {
                 "internalType": "string",
                 "name": "_newHash",
                 "type": "string"

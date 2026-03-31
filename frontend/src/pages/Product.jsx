@@ -209,8 +209,8 @@ export default function Product() {
       <div className="product-shell">
         <div className="top-row">
           <div className="title-wrap">
-            <span className="trace-chip">Chi tiết truy xuất</span>
-            <h1 className="title">{data?.product?.name || "Hồ sơ truy xuất"}</h1>
+            <span className="trace-chip">Thông tin truy xuất chi tiết</span>
+            <h1 className="title">{data?.product?.name || "Truy xuất nông sản"}</h1>
             <p className="title-sub">Toàn bộ hành trình của nông sản được cập nhật theo từng phiên bản.</p>
           </div>
 
@@ -241,17 +241,17 @@ export default function Product() {
                 Cảnh báo: phát hiện {violatedCount} phiên bản có dấu hiệu bị sửa dữ liệu hoặc không khớp blockchain.
               </div>
             ) : integrity?.is_safe === true ? (
-              <></>
+              <div className="integrity-ok">Dữ liệu tất cả phiên bản khớp với blockchain.</div>
             ) : (
-              <div className="integrity-info">Không thể lấy trạng thái kiểm tra toàn vẹn ở thời điểm hiện tại.</div>
+              <div className="integrity-info">Không thể lấy trạng thái kiểm tra integrity ở thời điểm hiện tại.</div>
             )}
 
             <section className="grid">
-            <article className="card info-card">
+            <article className="card">
               <div className="insight-grid">
                 <div className="insight-item">
                   <p className="insight-label">Trạng thái mới nhất</p>
-                  <p className="insight-value">{latestVersion?.status || "Không có"}</p>
+                  <p className="insight-value">{latestVersion?.status || "N/A"}</p>
                 </div>
                 <div className="insight-item">
                   <p className="insight-label">Tổng phiên bản</p>
@@ -267,27 +267,31 @@ export default function Product() {
               <div className="kv">
                 <div className="kv-item">
                   <p className="kv-label">Tên nông sản:</p>
-                  <p className="kv-value">{data.product?.name || "Không có"}</p>
+                  <p className="kv-value">{data.product?.name || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Xuất xứ:</p>
-                  <p className="kv-value">{data.product?.origin || "Không có"}</p>
+                  <p className="kv-value">{data.product?.origin || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Trạng thái hiện tại:</p>
-                  <p className="kv-value">{latestVersion?.status || "Không có"}</p>
+                  <p className="kv-value">{latestVersion?.status || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Mã lô:</p>
-                  <p className="kv-value">{data.product?.batch_code || "Không có"}</p>
+                  <p className="kv-value">{data.product?.batch_code || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Khu vực trồng:</p>
-                  <p className="kv-value">{data.product?.planting_area || "Không có"}</p>
+                  <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
+                </div>
+                <div className="kv-item">
+                  <p className="kv-label">Sản lượng (kg):</p>
+                  <p className="kv-value">{data.product?.quantity_kg || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Nhà cung cấp:</p>
-                  <p className="kv-value">{data.product?.supplier_name || "Không có"}</p>
+                  <p className="kv-value">{data.product?.supplier_name || "N/A"}</p>
                 </div>
                 <div className="kv-item">
                   <p className="kv-label">Ví sở hữu:</p>
@@ -336,16 +340,16 @@ export default function Product() {
                     return (
                     <div className={`timeline-item ${tamperReason ? "timeline-item-alert" : ""}`} key={version.version}>
                       <div className="timeline-head">
-                        <strong>Phiên bản {version.version}</strong>
+                        <strong>Version {version.version}</strong>
                         <div className="timeline-head-right">
-                          {tamperReason && <span className="tamper-pill">Cảnh báo toàn vẹn</span>}
+                          {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
                           <span className="status-pill">{version.status}</span>
                         </div>
                       </div>
 
                       <div className="timeline-meta">
                         <span>{formatDateTime(version.created_at)}</span>
-                        <span>{version.location || "Không có"}</span>
+                        <span>{version.location || "N/A"}</span>
                       </div>
 
                       <div className="timeline-body">
@@ -353,25 +357,25 @@ export default function Product() {
                           <img
                             className="preview"
                             src={toImageUrl(version.image)}
-                            alt={`Ảnh phiên bản ${version.version}`}
+                            alt={`Product version ${version.version}`}
                           />
                         )}
 
                         <div className="metric-grid">
                           <div className="metric-item">
                             <p className="metric-label">Nhiệt độ</p>
-                            <p className="metric-value">{version.temperature_c ?? "Không có"} C</p>
+                            <p className="metric-value">{version.temperature_c ?? "N/A"} C</p>
                           </div>
                           <div className="metric-item">
                             <p className="metric-label">Độ ẩm</p>
-                            <p className="metric-value">{version.humidity_percent ?? "Không có"}%</p>
+                            <p className="metric-value">{version.humidity_percent ?? "N/A"}%</p>
                           </div>
                         </div>
 
                         <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
 
-                        <p className="mono" title={version.hash || ""}>Mã băm: {shortenHash(version.hash)}</p>
-                        <p className="mono" title={version.tx_hash || ""}>Mã giao dịch: {shortenHash(version.tx_hash)}</p>
+                        <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
+                        <p className="mono" title={version.tx_hash || ""}>Tx: {shortenHash(version.tx_hash)}</p>
                         {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
                       </div>
                     </div>

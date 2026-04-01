@@ -207,27 +207,29 @@ export default function Product() {
   return (
     <div className="product-page">
       <div className="product-shell">
-        <div className="top-row">
-          <div className="title-wrap">
-            <span className="trace-chip">Thông tin truy xuất chi tiết</span>
-            <h1 className="title">{data?.product?.name || "Nền tảng truy xuất nông sản"}</h1>
-            <p className="title-sub">Toàn bộ hành trình của nông sản được cập nhật theo từng phiên bản.</p>
+        <section className="product-hero-v2">
+          <div className="product-hero-main">
+            <span className="product-chip-v2">Truy xuất nguồn gốc nông sản</span>
+            <h1 className="product-title-v2">{data?.product?.name || "Nền tảng truy xuất nông sản"}</h1>
+            <p className="product-sub-v2">
+              Xem toàn bộ lịch sử của sản phẩm theo từng phiên bản với thông tin xác thực và dữ liệu kiểm chứng.
+            </p>
           </div>
 
-          <div className="top-actions">
-            <span className="id-tag">Mã sản phẩm: #{id}</span>
-            <Link className="btn-link" to="/">
-              Về trang chủ
-            </Link>
-            {isOwner && (
-              <> 
-                <Link className="btn-link" to={`/update/${id}`}>
+          <div className="product-hero-actions-v2">
+            <span className="product-id-v2">Mã sản phẩm: #{id}</span>
+            <div className="product-action-row-v2">
+              <Link className="product-btn-v2 product-btn-soft-v2" to="/">
+                Về trang chủ
+              </Link>
+              {isOwner && (
+                <Link className="product-btn-v2 product-btn-strong-v2" to={`/update/${id}`}>
                   Cập nhật sản phẩm
                 </Link>
-              </>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        </section>
 
         {loading && <div className="loading">Đang tải thông tin sản phẩm...</div>}
         {error && !loading && <div className="error">{error}</div>}
@@ -246,149 +248,158 @@ export default function Product() {
               <div className="integrity-info">Không thể lấy trạng thái kiểm tra integrity ở thời điểm hiện tại.</div>
             )}
 
-            <section className="grid">
-            <article className="card">
-              <div className="insight-grid">
-                <div className="insight-item">
-                  <p className="insight-label">Trạng thái mới nhất</p>
-                  <p className="insight-value">{latestVersion?.status || "N/A"}</p>
-                </div>
-                <div className="insight-item">
-                  <p className="insight-label">Tổng phiên bản</p>
-                  <p className="insight-value">{versionCount}</p>
-                </div>
-                <div className="insight-item">
-                  <p className="insight-label">Cập nhật gần nhất</p>
-                  <p className="insight-value">{formatDateTime(latestRecordedAt)}</p>
-                </div>
-              </div>
-
-              <h2 className="section-title">Thông tin chung</h2>
-              <div className="kv">
-                <div className="kv-item">
-                  <p className="kv-label">Tên nông sản:</p>
-                  <p className="kv-value">{data.product?.name || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Xuất xứ:</p>
-                  <p className="kv-value">{data.product?.origin || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Trạng thái hiện tại:</p>
-                  <p className="kv-value">{latestVersion?.status || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Mã lô:</p>
-                  <p className="kv-value">{data.product?.batch_code || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Khu vực trồng:</p>
-                  <p className="kv-value">{data.product?.planting_area || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Nhà cung cấp:</p>
-                  <p className="kv-value">{data.product?.supplier_name || "N/A"}</p>
-                </div>
-                <div className="kv-item">
-                  <p className="kv-label">Ví sở hữu:</p>
-                  <p className="kv-value" title={data.product?.owner_wallet || ""}>
-                    {shortenWallet(data.product?.owner_wallet)}
-                  </p>
-                </div>
-              </div>
-
-              {isOwner && (
-                <section className="qr-card">
-                  <h3 className="qr-head">QR Truy Xuất Nguồn Gốc</h3>
-                  <p className="qr-sub">In mã này và dán lên sản phẩm. Người dùng quét sẽ mở trang thông tin chi tiết.</p>
-
-                  <div className="qr-layout">
-                    <div className="qr-box">
-                      {qrImageUrl && <img className="qr-image" src={qrImageUrl} alt={`QR truy xuất sản phẩm ${id}`} />}
-                    </div>
-
-                    <div className="qr-details">
-                      <p className="qr-url">{traceUrl}</p>
-                      <div className="qr-actions">
-                        <button className="qr-btn" type="button" onClick={downloadQr}>
-                          Tải QR
-                        </button>
-                        <button className="qr-btn" type="button" onClick={printTraceQr}>
-                          In QR
-                        </button>
-                      </div>
-                    </div>
+            <section className="product-layout-v2">
+              <article className="product-panel-v2 product-panel-info-v2">
+                <div className="product-summary-v2">
+                  <div className="product-summary-item-v2">
+                    <p className="product-summary-label-v2">Trạng thái mới nhất</p>
+                    <p className="product-summary-value-v2">{latestVersion?.status || "Không có"}</p>
                   </div>
-                </section>
-              )}
-            </article>
+                  <div className="product-summary-item-v2">
+                    <p className="product-summary-label-v2">Tổng phiên bản</p>
+                    <p className="product-summary-value-v2">{versionCount}</p>
+                  </div>
+                  <div className="product-summary-item-v2">
+                    <p className="product-summary-label-v2">Cập nhật gần nhất</p>
+                    <p className="product-summary-value-v2">{formatDateTime(latestRecordedAt)}</p>
+                  </div>
+                </div>
 
-            <article className="card">
-              <h2 className="section-title">Lịch sử phiên bản</h2>
+                <h2 className="product-section-title-v2">Thông tin chung</h2>
+                <div className="product-facts-v2">
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Tên nông sản</p>
+                    <p className="product-fact-value-v2">{data.product?.name || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Xuất xứ</p>
+                    <p className="product-fact-value-v2">{data.product?.origin || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Trạng thái hiện tại</p>
+                    <p className="product-fact-value-v2">{latestVersion?.status || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Mã lô</p>
+                    <p className="product-fact-value-v2">{data.product?.batch_code || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Khu vực trồng</p>
+                    <p className="product-fact-value-v2">{data.product?.planting_area || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2">
+                    <p className="product-fact-label-v2">Nhà cung cấp</p>
+                    <p className="product-fact-value-v2">{data.product?.supplier_name || "Không có"}</p>
+                  </div>
+                  <div className="product-fact-v2 product-fact-full-v2">
+                    <p className="product-fact-label-v2">Ví sở hữu</p>
+                    <p className="product-fact-value-v2" title={data.product?.owner_wallet || ""}>
+                      {shortenWallet(data.product?.owner_wallet)}
+                    </p>
+                  </div>
+                </div>
 
-              {!data.versions?.length ? (
-                <div className="empty">Chưa có phiên bản nào cho sản phẩm này.</div>
-              ) : (
-                <div className="timeline">
-                  {data.versions.map((version) => {
-                    const tamperReason = tamperedVersionMap.get(version.version);
+                {isOwner && (
+                  <section className="product-qr-v2">
+                    <h3 className="product-qr-title-v2">QR truy xuất nguồn gốc</h3>
+                    <p className="product-qr-sub-v2">
+                      In mã này và dán lên sản phẩm. Người dùng quét sẽ mở trực tiếp trang thông tin chi tiết.
+                    </p>
 
-                    return (
-                    <div className={`timeline-item ${tamperReason ? "timeline-item-alert" : ""}`} key={version.version}>
-                      <div className="timeline-head">
-                        <strong>Version {version.version}</strong>
-                        <div className="timeline-head-right">
-                          {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
-                          <span className="status-pill">{version.status}</span>
-                        </div>
+                    <div className="product-qr-layout-v2">
+                      <div className="product-qr-box-v2">
+                        {qrImageUrl && <img className="product-qr-image-v2" src={qrImageUrl} alt={`QR truy xuất sản phẩm ${id}`} />}
                       </div>
 
-                      <div className="timeline-meta">
-                        <span>{formatDateTime(version.created_at)}</span>
-                        <span>{version.location || "N/A"}</span>
-                      </div>
-
-                      <div className="timeline-body">
-                        {version.image && (
-                          <img
-                            className="preview"
-                            src={toImageUrl(version.image)}
-                            alt={`Product version ${version.version}`}
-                          />
-                        )}
-
-                        <div className="metric-grid">
-                          <div className="metric-item">
-                            <p className="metric-label">Nhiệt độ</p>
-                            <p className="metric-value">{version.temperature_c ?? "N/A"} C</p>
-                          </div>
-                          <div className="metric-item">
-                            <p className="metric-label">Độ ẩm</p>
-                            <p className="metric-value">{version.humidity_percent ?? "N/A"}%</p>
-                          </div>
+                      <div className="product-qr-details-v2">
+                        <p className="product-qr-url-v2">{traceUrl}</p>
+                        <div className="product-qr-actions-v2">
+                          <button className="product-btn-v2 product-btn-soft-v2" type="button" onClick={downloadQr}>
+                            Tải QR
+                          </button>
+                          <button className="product-btn-v2 product-btn-strong-v2" type="button" onClick={printTraceQr}>
+                            In QR
+                          </button>
                         </div>
-
-                        <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
-
-                        <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
-                        <a 
-                          className="mono" 
-                          href={version.tx_hash ? `https://coston2-explorer.flare.network/tx/${version.tx_hash}` : "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={version.tx_hash || ""}
-                          style={{ textDecoration: "none", color: "inherit", cursor: version.tx_hash ? "pointer" : "default" }}
-                        >
-                          Tx: {shortenHash(version.tx_hash)}
-                        </a>
-                        {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
                       </div>
                     </div>
-                  )})}
-                </div>
-              )}
+                  </section>
+                )}
+              </article>
 
-            </article>
+              <article className="product-panel-v2">
+                <div className="product-timeline-head-v2">
+                  <h2 className="product-section-title-v2">Lịch sử phiên bản</h2>
+                  <p className="product-timeline-sub-v2">Mỗi bản ghi là một mốc hành trình đã được lưu trữ.</p>
+                </div>
+
+                {!data.versions?.length ? (
+                  <div className="empty">Chưa có phiên bản nào cho sản phẩm này.</div>
+                ) : (
+                  <div className="timeline">
+                    {data.versions.map((version) => {
+                      const tamperReason = tamperedVersionMap.get(version.version);
+
+                      return (
+                        <div className={`timeline-item ${tamperReason ? "timeline-item-alert" : ""}`} key={version.version}>
+                          <div className="timeline-head">
+                            <strong>Version {version.version}</strong>
+                            <div className="timeline-head-right">
+                              {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
+                              <span className="status-pill">{version.status}</span>
+                            </div>
+                          </div>
+
+                          <div className="timeline-meta">
+                            <span>{formatDateTime(version.created_at)}</span>
+                            <span>{version.location || "Không có"}</span>
+                          </div>
+
+                          <div className="timeline-body">
+                            {version.image && (
+                              <img
+                                className="preview"
+                                src={toImageUrl(version.image)}
+                                alt={`Product version ${version.version}`}
+                              />
+                            )}
+
+                            <div className="metric-grid">
+                              <div className="metric-item">
+                                <p className="metric-label">Nhiệt độ</p>
+                                <p className="metric-value">{version.temperature_c ?? "Không có"} C</p>
+                              </div>
+                              <div className="metric-item">
+                                <p className="metric-label">Độ ẩm</p>
+                                <p className="metric-value">{version.humidity_percent ?? "Không có"}%</p>
+                              </div>
+                            </div>
+
+                            <p className="note-line">{version.note || "Không có ghi chú cho phiên bản này."}</p>
+
+                            <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
+                            <a
+                              className="mono"
+                              href={version.tx_hash ? `https://coston2-explorer.flare.network/tx/${version.tx_hash}` : "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={version.tx_hash || ""}
+                              style={{
+                                textDecoration: "none",
+                                color: "inherit",
+                                cursor: version.tx_hash ? "pointer" : "default",
+                              }}
+                            >
+                              Tx: {shortenHash(version.tx_hash)}
+                            </a>
+                            {tamperReason && <p className="tamper-reason">{tamperReason}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </article>
             </section>
           </>
         )}

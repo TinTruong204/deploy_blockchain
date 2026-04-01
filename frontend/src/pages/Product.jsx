@@ -220,11 +220,11 @@ export default function Product() {
             <span className="product-id-v2">Mã sản phẩm: #{id}</span>
             <div className="product-action-row-v2">
               <Link className="product-btn-v2 product-btn-soft-v2 product-hero-btn-v2" to="/">
-                Xem danh sách sản phẩm
+                Về trang chủ
               </Link>
               {isOwner && (
                 <Link className="product-btn-v2 product-btn-strong-v2 product-hero-btn-v2" to={`/update/${id}`}>
-                  Chỉnh sửa thông tin
+                  Cập nhật thông tin
                 </Link>
               )}
             </div>

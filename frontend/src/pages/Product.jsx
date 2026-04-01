@@ -373,7 +373,7 @@ export default function Product() {
                         <p className="mono" title={version.hash || ""}>Hash: {shortenHash(version.hash)}</p>
                         <a 
                           className="mono" 
-                          href={version.tx_hash ? `https://flare-explorer.flare.network/tx/${version.tx_hash}` : "#"}
+                          href={version.tx_hash ? `https://coston2-explorer.flare.network/tx/${version.tx_hash}` : "#"}
                           target="_blank"
                           rel="noopener noreferrer"
                           title={version.tx_hash || ""}

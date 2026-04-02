@@ -3,7 +3,7 @@ from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
 import json
 import os
 
-RPC_URL = os.getenv("WEB3_RPC_URL", "https://coston2.enosys.global/ext/C/rpc")
+RPC_URL = os.getenv("WEB3_RPC_URL", "https://coston2-api.flare.network/ext/C/rpc")
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL, request_kwargs={"timeout": 10}))
 

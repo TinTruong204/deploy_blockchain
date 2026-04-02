@@ -51,6 +51,7 @@ export default function Product() {
 
   const tamperedVersionMap = useMemo(() => {
     const map = new Map();
+    // API verify trả về kết quả theo từng version; version lỗi sẽ được map sang lý do cảnh báo.
     const verifyResults = integrity?.results || [];
 
     verifyResults.forEach((item) => {
@@ -79,6 +80,7 @@ export default function Product() {
         setIntegrityLoading(true);
         setIntegrity(null);
 
+        // Gọi song song dữ liệu sản phẩm và trạng thái verify để giảm thời gian chờ.
         const [productResponse, verifyResponse] = await Promise.allSettled([
           API.get(`/product/${id}/`),
           API.get(`/product/${id}/verify/`),

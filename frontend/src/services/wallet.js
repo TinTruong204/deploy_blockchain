@@ -169,6 +169,7 @@ export const buildImageFileHash = async (file) => {
 };
 
 export const addProductOnChain = async (productId, hashValue) => {
+  // Ghi hash CREATE lên contract và chờ giao dịch được xác nhận.
   const contract = await getContractWithSigner();
   const tx = await contract.addProduct(productId, hashValue);
   await tx.wait();
@@ -176,6 +177,7 @@ export const addProductOnChain = async (productId, hashValue) => {
 };
 
 export const updateProductOnChain = async (productId, hashValue) => {
+  // Ghi hash UPDATE lên contract và chờ giao dịch được xác nhận.
   const contract = await getContractWithSigner();
   const tx = await contract.updateProduct(productId, hashValue);
   await tx.wait();
@@ -183,6 +185,7 @@ export const updateProductOnChain = async (productId, hashValue) => {
 };
 
 export const connectWalletWithEthers = async () => {
+  // Yêu cầu MetaMask cấp quyền truy cập ví, rồi trả về địa chỉ signer hiện tại.
   const provider = getBrowserProvider();
   if (!provider) {
     throw new Error("Không tìm thấy MetaMask. Vui lòng cài extension trước.");

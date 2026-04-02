@@ -22,6 +22,11 @@ const STATUS_DISPLAY_MAP = {
   SOLD: "Đã bán",
 };
 
+const toNumberOrNaN = (value) => {
+  const parsed = Number.parseFloat(String(value ?? "").trim());
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
+
 export default function Update() {
   const { id: routeId } = useParams();
   const navigate = useNavigate();
@@ -114,37 +119,80 @@ export default function Update() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!productId.trim()) {
-      setMessage("Vui lòng nhập Product ID.");
-      return;
-    }
-
-    if (!image) {
-      setMessage("Vui lòng chọn ảnh phiên bản mới.");
-      return;
-    }
-
-    if (!wallet) {
-      setMessage("Vui lòng kết nối ví trước khi cập nhật sản phẩm.");
-      return;
-    }
-
-    const formData = new FormData();
+    // Chuẩn hóa dữ liệu đầu vào để kiểm tra và gửi dữ liệu nhất quán.
     const normalizedId = productId.trim();
     const normalizedLocation = location.trim();
     const normalizedTemperatureC = temperatureC.trim();
     const normalizedHumidityPercent = humidityPercent.trim();
     const normalizedNote = note.trim();
 
+    if (!normalizedId) {
+      setMessage("Vui lòng nhập Product ID.");
+      return;
+    }
+    if (!STATUS_OPTIONS.includes(status)) {
+      setMessage("Trạng thái không hợp lệ. Vui lòng chọn lại.");
+      return;
+    }
+    if (!normalizedLocation) {
+      setMessage("Vui lòng nhập Vị trí hiện tại.");
+      return;
+    }
+    if (!normalizedTemperatureC) {
+      setMessage("Vui lòng nhập Nhiệt độ (°C).");
+      return;
+    }
+    if (!normalizedHumidityPercent) {
+      setMessage("Vui lòng nhập Độ ẩm (%).");
+      return;
+    }
+    if (!normalizedNote) {
+      setMessage("Vui lòng nhập Ghi chú cập nhật.");
+      return;
+    }
+    if (!image) {
+      setMessage("Vui lòng chọn ảnh phiên bản mới.");
+      return;
+    }
+    if (!wallet) {
+      setMessage("Vui lòng kết nối ví trước khi cập nhật sản phẩm.");
+      return;
+    }
+
+    const temperatureValue = toNumberOrNaN(normalizedTemperatureC);
+    if (Number.isNaN(temperatureValue)) {
+      setMessage("Nhiệt độ không hợp lệ. Vui lòng nhập số (ví dụ: 5.8).");
+      return;
+    }
+    if (temperatureValue < -50 || temperatureValue > 100) {
+      setMessage("Nhiệt độ phải trong khoảng từ -50 đến 100°C.");
+      return;
+    }
+
+    const humidityValue = toNumberOrNaN(normalizedHumidityPercent);
+    if (Number.isNaN(humidityValue)) {
+      setMessage("Độ ẩm không hợp lệ. Vui lòng nhập số từ 0 đến 100.");
+      return;
+    }
+    if (humidityValue < 0 || humidityValue > 100) {
+      setMessage("Độ ẩm phải trong khoảng từ 0 đến 100%.");
+      return;
+    }
+
+    const formData = new FormData();
+
     try {
       setIsSubmitting(true);
       setMessage("Vui lòng xác nhận giao dịch cập nhật trên MetaMask...");
 
+      // Lấy dữ liệu sản phẩm hiện tại để tính version kế tiếp cho hash UPDATE.
       const productResponse = await API.get(`/product/${normalizedId}/`);
       const product = productResponse?.data?.product || {};
       const versions = productResponse?.data?.versions || [];
       const latestVersion = versions.length ? versions[versions.length - 1] : null;
       const nextVersion = (latestVersion?.version || 0) + 1;
+
+      // Tạo hash snapshot phiên bản mới trước khi ghi lên blockchain.
       const imageHash = await buildImageFileHash(image);
 
       const hashValue = await buildProductHash({
@@ -164,6 +212,8 @@ export default function Update() {
         note: normalizedNote,
         image_sha256: imageHash,
       });
+
+      // Bước 1: ký giao dịch updateProduct trên MetaMask.
       const txHash = await updateProductOnChain(normalizedId, hashValue);
 
       formData.append("id", normalizedId);
@@ -176,6 +226,7 @@ export default function Update() {
       formData.append("tx_hash", txHash);
       formData.append("image", image);
 
+      // Bước 2: gửi backend để xác minh tx và lưu ProductVersion mới.
       setMessage("Đang đồng bộ dữ liệu về backend...");
 
       await API.post("/update/", formData, {

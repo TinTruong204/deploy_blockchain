@@ -287,6 +287,7 @@ def verify_product_versions(product):
     results = []
 
     for version_item in versions:
+        # Bước 1: kiểm tra tx trên chain và lấy onchain_hash từ input giao dịch.
         verify_result = verify_product_version_onchain(product.id, version_item)
         recalculated_hash = None
         stored_hash = str(version_item.hash or "").strip().lower()
@@ -307,6 +308,7 @@ def verify_product_versions(product):
             continue
 
         try:
+            # Bước 2: tính lại hash từ dữ liệu DB hiện tại của version này.
             recalculated_hash = build_expected_hash_for_version(product, version_item)
         except Exception as error:
             verify_result = {
@@ -320,6 +322,7 @@ def verify_product_versions(product):
             onchain_hash = str(verify_result.get("onchain_hash") or "").strip().lower()
             recalculated_hash_lower = recalculated_hash.lower()
 
+            # Bước 3: so sánh hash on-chain, hash tính lại và hash đã lưu trong DB.
             if not onchain_hash:
                 verify_result = {
                     "ok": False,

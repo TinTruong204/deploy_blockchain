@@ -11,6 +11,11 @@ import {
   WALLET_STORAGE_KEY,
 } from "../services/wallet";
 
+const toNumberOrNaN = (value) => {
+  const parsed = Number.parseFloat(String(value ?? "").trim());
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
+
 export default function Create() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -105,17 +110,7 @@ export default function Create() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!name.trim() || !origin.trim() || !image) {
-      setStatus("Vui lòng nhập đầy đủ Name, Origin và chọn ảnh sản phẩm.");
-      return;
-    }
-
-    if (!wallet) {
-      setStatus("Vui lòng kết nối ví trước khi tạo sản phẩm.");
-      return;
-    }
-
-    const formData = new FormData();
+    // Chuẩn hóa dữ liệu đầu vào để validate/hash/submit dùng cùng một giá trị.
     const productName = name.trim();
     const productOrigin = origin.trim();
     const normalizedBatchCode = batchCode.trim();
@@ -125,6 +120,73 @@ export default function Create() {
     const normalizedTemperatureC = temperatureC.trim();
     const normalizedHumidityPercent = humidityPercent.trim();
     const normalizedNote = note.trim();
+
+    if (!productName) {
+      setStatus("Vui lòng nhập Tên nông sản.");
+      return;
+    }
+    if (!productOrigin) {
+      setStatus("Vui lòng nhập Nguồn gốc.");
+      return;
+    }
+    if (!normalizedBatchCode) {
+      setStatus("Vui lòng nhập Mã lô (Batch Code).");
+      return;
+    }
+    if (!normalizedPlantingArea) {
+      setStatus("Vui lòng nhập Khu vực trồng.");
+      return;
+    }
+    if (!normalizedSupplierName) {
+      setStatus("Vui lòng nhập Nhà cung cấp.");
+      return;
+    }
+    if (!normalizedLocation) {
+      setStatus("Vui lòng nhập Vị trí hiện tại.");
+      return;
+    }
+    if (!normalizedTemperatureC) {
+      setStatus("Vui lòng nhập Nhiệt độ (°C).");
+      return;
+    }
+    if (!normalizedHumidityPercent) {
+      setStatus("Vui lòng nhập Độ ẩm (%).");
+      return;
+    }
+    if (!normalizedNote) {
+      setStatus("Vui lòng nhập Ghi chú quản lý.");
+      return;
+    }
+    if (!image) {
+      setStatus("Vui lòng chọn ảnh sản phẩm.");
+      return;
+    }
+    if (!wallet) {
+      setStatus("Vui lòng kết nối ví trước khi tạo sản phẩm.");
+      return;
+    }
+
+    const temperatureValue = toNumberOrNaN(normalizedTemperatureC);
+    if (Number.isNaN(temperatureValue)) {
+      setStatus("Nhiệt độ không hợp lệ. Vui lòng nhập số (ví dụ: 6.5).");
+      return;
+    }
+    if (temperatureValue < -50 || temperatureValue > 100) {
+      setStatus("Nhiệt độ phải trong khoảng từ -50 đến 100°C.");
+      return;
+    }
+
+    const humidityValue = toNumberOrNaN(normalizedHumidityPercent);
+    if (Number.isNaN(humidityValue)) {
+      setStatus("Độ ẩm không hợp lệ. Vui lòng nhập số từ 0 đến 100.");
+      return;
+    }
+    if (humidityValue < 0 || humidityValue > 100) {
+      setStatus("Độ ẩm phải trong khoảng từ 0 đến 100%.");
+      return;
+    }
+
+    const formData = new FormData();
     const productId = crypto.randomUUID();
     const statusOnChain = "PLANTED";
 
@@ -132,6 +194,7 @@ export default function Create() {
       setIsSubmitting(true);
       setStatus("Vui lòng xác nhận giao dịch tạo sản phẩm trên MetaMask...");
 
+      // Tạo hash từ ảnh + dữ liệu nghiệp vụ trước khi ghi on-chain.
       const imageHash = await buildImageFileHash(image);
       const hashValue = await buildProductHash({
         action: "CREATE",
@@ -150,6 +213,8 @@ export default function Create() {
         note: normalizedNote,
         image_sha256: imageHash,
       });
+
+      // Bước 1: ký giao dịch addProduct trên MetaMask và lấy tx hash.
       const txHash = await addProductOnChain(productId, hashValue);
 
       formData.append("id", productId);
@@ -166,6 +231,7 @@ export default function Create() {
       formData.append("tx_hash", txHash);
       formData.append("image", image);
 
+      // Bước 2: đồng bộ về backend để lưu DB/IPFS và xác minh giao dịch.
       setStatus("Đang đồng bộ dữ liệu về backend...");
 
       const response = await API.post("/create/", formData, {

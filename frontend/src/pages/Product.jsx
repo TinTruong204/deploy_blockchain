@@ -53,7 +53,13 @@ export default function Product() {
     return map;
   }, [integrity]);
 
-  const violatedCount = integrity?.violated_versions?.length || 0;
+  const violatedCount = useMemo(() => {
+    if (!integrity?.violated_versions || !data?.versions) return 0;
+    
+    // Chỉ đếm những phiên bản bị violated thuộc sản phẩm hiện tại
+    const currentVersionNumbers = new Set(data.versions.map(v => v.version));
+    return integrity.violated_versions.filter(v => currentVersionNumbers.has(v)).length;
+  }, [integrity, data]);
 
   useEffect(() => {
     const fetchProduct = async () => {

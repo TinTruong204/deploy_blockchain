@@ -5,7 +5,7 @@ import os
 
 RPC_URL = os.getenv("WEB3_RPC_URL", "https://coston2.enosys.global/ext/C/rpc")
 
-w3 = Web3(Web3.HTTPProvider(RPC_URL))
+w3 = Web3(Web3.HTTPProvider(RPC_URL, request_kwargs={"timeout": 10}))
 
 w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 

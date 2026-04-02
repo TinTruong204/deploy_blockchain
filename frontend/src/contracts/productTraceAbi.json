@@ -36,31 +36,6 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "oldOwner",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "uuid",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
         "name": "owner",
         "type": "address"
       },

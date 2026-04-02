@@ -10,7 +10,7 @@ w3 = Web3(Web3.HTTPProvider(RPC_URL, request_kwargs={"timeout": 10}))
 w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 contract_address = Web3.to_checksum_address(
-    os.getenv("PRODUCT_TRACE_CONTRACT_ADDRESS", "0xD4079cF3719Ae0DAE71598EFFA046A841ED3fED9")
+    os.getenv("PRODUCT_TRACE_CONTRACT_ADDRESS", "0x32448a2Af76b555800AC594F858ec635a06A6878")
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

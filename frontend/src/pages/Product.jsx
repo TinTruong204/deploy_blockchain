@@ -4,6 +4,15 @@ import API from "../services/api";
 import { getConnectedWalletWithEthers } from "../services/wallet";
 import "../assets/homeProductPages.css";
 
+const STATUS_DISPLAY_MAP = {
+  PLANTED: "Đã trồng",
+  HARVESTED: "Đã thu hoạch",
+  PACKAGED: "Đã đóng gói",
+  SHIPPED: "Đã vận chuyển",
+  DELIVERED: "Đã giao hàng",
+  SOLD: "Đã bán",
+};
+
 export default function Product() {
   const { id } = useParams();
   const [data, setData] = useState(null);
@@ -259,7 +268,7 @@ export default function Product() {
                 <div className="product-summary-v2">
                   <div className="product-summary-item-v2">
                     <p className="product-summary-label-v2">Trạng thái mới nhất</p>
-                    <p className="product-summary-value-v2">{latestVersion?.status || "Không có"}</p>
+                    <p className="product-summary-value-v2">{STATUS_DISPLAY_MAP[latestVersion?.status] || latestVersion?.status || "Không có"}</p>
                   </div>
                   <div className="product-summary-item-v2">
                     <p className="product-summary-label-v2">Tổng phiên bản</p>
@@ -283,7 +292,7 @@ export default function Product() {
                   </div>
                   <div className="product-fact-v2">
                     <p className="product-fact-label-v2">Trạng thái hiện tại</p>
-                    <p className="product-fact-value-v2">{latestVersion?.status || "Không có"}</p>
+                    <p className="product-fact-value-v2">{STATUS_DISPLAY_MAP[latestVersion?.status] || latestVersion?.status || "Không có"}</p>
                   </div>
                   <div className="product-fact-v2">
                     <p className="product-fact-label-v2">Mã lô</p>
@@ -352,7 +361,7 @@ export default function Product() {
                             <strong>Version {version.version}</strong>
                             <div className="timeline-head-right">
                               {tamperReason && <span className="tamper-pill">Canh bao integrity</span>}
-                              <span className="status-pill">{version.status}</span>
+                              <span className="status-pill">{STATUS_DISPLAY_MAP[version.status] || version.status}</span>
                             </div>
                           </div>
 

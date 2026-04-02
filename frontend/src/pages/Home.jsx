@@ -9,6 +9,16 @@ import {
   WALLET_STORAGE_KEY,
 } from "../services/wallet";
 
+const STATUS_DISPLAY_MAP = {
+  ALL: "Tất cả",
+  PLANTED: "Đã trồng",
+  HARVESTED: "Đã thu hoạch",
+  PACKAGED: "Đã đóng gói",
+  SHIPPED: "Đã vận chuyển",
+  DELIVERED: "Đã giao hàng",
+  SOLD: "Đã bán",
+};
+
 export default function Home() {
   const STATUS_FILTER_OPTIONS = ["ALL", "PLANTED", "HARVESTED", "PACKAGED", "SHIPPED", "DELIVERED", "SOLD"];
   const ITEMS_PER_PAGE = 9;
@@ -268,7 +278,7 @@ export default function Home() {
                 <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                   {STATUS_FILTER_OPTIONS.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {STATUS_DISPLAY_MAP[item]}
                     </option>
                   ))}
                 </select>

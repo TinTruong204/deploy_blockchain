@@ -13,6 +13,15 @@ import {
 
 const STATUS_OPTIONS = ["PLANTED", "HARVESTED", "PACKAGED", "SHIPPED", "DELIVERED", "SOLD"];
 
+const STATUS_DISPLAY_MAP = {
+  PLANTED: "Đã trồng",
+  HARVESTED: "Đã thu hoạch",
+  PACKAGED: "Đã đóng gói",
+  SHIPPED: "Đã vận chuyển",
+  DELIVERED: "Đã giao hàng",
+  SOLD: "Đã bán",
+};
+
 export default function Update() {
   const { id: routeId } = useParams();
   const navigate = useNavigate();
@@ -222,7 +231,7 @@ export default function Update() {
                 <select className="select" value={status} onChange={(event) => setStatus(event.target.value)}>
                   {STATUS_OPTIONS.map((item) => (
                     <option key={item} value={item}>
-                      {item}
+                      {STATUS_DISPLAY_MAP[item]}
                     </option>
                   ))}
                 </select>

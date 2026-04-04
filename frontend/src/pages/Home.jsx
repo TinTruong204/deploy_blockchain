@@ -317,8 +317,8 @@ export default function Home() {
                       />
                     )}
                     <h3 className="product-name">{item.name}</h3>
-                    <p className="product-meta">Origin: {item.origin}</p>
-                    <span className="product-badge">{item.latest_version?.status || "NO STATUS"}</span>
+                    <p className="product-meta">Nguồn gốc: {item.origin}</p>
+                    <span className="product-badge">{STATUS_DISPLAY_MAP[item.latest_version?.status] || item.latest_version?.status || "Không có"}</span>
                   </Link>
                 ))}
               </div>

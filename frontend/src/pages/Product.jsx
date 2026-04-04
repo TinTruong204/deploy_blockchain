@@ -65,7 +65,7 @@ export default function Product() {
 
   const violatedCount = useMemo(() => {
     if (!integrity?.violated_versions || !data?.versions) return 0;
-    
+
     // Chỉ đếm những phiên bản bị violated thuộc sản phẩm hiện tại
     const currentVersionNumbers = new Set(data.versions.map(v => v.version));
     return integrity.violated_versions.filter(v => currentVersionNumbers.has(v)).length;
@@ -236,9 +236,11 @@ export default function Product() {
           <div className="product-hero-actions-v2">
             <span className="product-id-v2">Mã sản phẩm: #{id}</span>
             <div className="product-action-row-v2">
-              <Link className="product-btn-v2 product-btn-soft-v2 product-hero-btn-v2" to="/">
-                Về trang chủ
-              </Link>
+              {isOwner && (
+                <Link className="product-btn-v2 product-btn-soft-v2 product-hero-btn-v2" to="/">
+                  Về trang chủ
+                </Link>
+              )}
               {isOwner && (
                 <Link className="product-btn-v2 product-btn-strong-v2 product-hero-btn-v2" to={`/update/${id}`}>
                   Cập nhật thông tin
